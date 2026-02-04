@@ -1,0 +1,159 @@
+/* frontend/assets/style.css */
+
+/* 전체 레이아웃 잡기 */
+body { margin: 0; font-family: 'Noto Sans KR', sans-serif; display: flex; height: 100vh; overflow: hidden; }
+
+.main-container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+
+/* --- 왼쪽 사이드바 (친구 목록) --- */
+.sidebar {
+    width: 300px; /* 너비 고정 */
+    background-color: #f5f5f5;
+    border-right: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+}
+
+.user-profile {
+    padding: 20px;
+    background-color: #007bff;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.btn-logout {
+    background-color: transparent;
+    border: 1px solid white;
+    color: white;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.friend-list-area {
+    padding: 10px;
+    overflow-y: auto; /* 스크롤 가능하게 */
+}
+
+/* 친구 목록 아이템 디자인 */
+.friend-item {
+    padding: 15px;
+    background-color: white;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    cursor: pointer; /* 마우스 올리면 손가락 모양 */
+    transition: background 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.friend-item:hover {
+    background-color: #e9ecef; /* 마우스 올렸을 때 색 변화 */
+}
+
+/* --- 오른쪽 채팅 영역 --- */
+.chat-area {
+    flex: 1; /* 남은 공간 다 차지 */
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+}
+
+.chat-header {
+    padding: 15px;
+    border-bottom: 1px solid #ddd;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.chat-messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background-color: #b2c7d9; /* 카카오톡 느낌의 하늘색 배경 */
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* 메시지 사이 간격 */
+}
+
+.chat-input {
+    padding: 20px;
+    border-top: 1px solid #ddd;
+    display: flex;
+    gap: 10px;
+}
+
+.chat-input input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+}
+
+.chat-input button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+}
+
+/* 1. 메시지 한 줄의 틀 (공통) */
+.message-row {
+    display: flex;
+    flex-direction: column;
+    max-width: 70%; /* 말풍선이 너무 길어지지 않게 제한 */
+}
+
+/* 2. 상대방 메시지 (왼쪽) */
+.message-other {
+    align-self: flex-start; /* 왼쪽 정렬 */
+}
+
+/* 3. 내 메시지 (오른쪽) */
+.message-mine {
+    align-self: flex-end;   /* 오른쪽 정렬 */
+    align-items: flex-end;  /* 내부 요소들도 오른쪽 정렬 */
+}
+
+/* 이름표 스타일 (상대방에게만 보임) */
+.message-name {
+    font-size: 12px;
+    color: #555;
+    margin-bottom: 5px;
+    margin-left: 5px;
+}
+
+/* 말풍선 본체 스타일 */
+.message-bubble {
+    padding: 10px 15px;
+    border-radius: 15px;
+    font-size: 14px;
+    line-height: 1.5;
+    word-wrap: break-word; /* 긴 단어 줄바꿈 */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1); /* 살짝 그림자 */
+}
+
+/* 상대방 말풍선 색상 (흰색) */
+.message-other .message-bubble {
+    background-color: #ffffff;
+    border-top-left-radius: 0; /* 왼쪽 위 뾰족하게 */
+}
+
+/* 내 말풍선 색상 (노란색 or 파란색) */
+.message-mine .message-bubble {
+    background-color: #ffeb33; /* 카카오톡 노란색 */
+    color: #000;
+    border-top-right-radius: 0; /* 오른쪽 위 뾰족하게 */
+}
+
+/* (선택) 내 메시지일 때 이름 숨기기 (보통 앱들은 내 이름은 안 보여줌) */
+.message-mine .message-name {
+    display: none;
+}

@@ -1,0 +1,102 @@
+/* frontend/assets/style.css */
+body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background-color: #f0f2f5;
+    display: flex;
+    justify-content: center; /* 중앙 정렬 */
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.container {
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    width: 350px;
+}
+
+.input-group {
+    margin-bottom: 15px;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box; /* 패딩 포함 너비 계산 */
+}
+
+.btn-primary {
+    width: 100%;
+    padding: 12px;
+    background-color: #007bff; /* 파란색 버튼 */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}
+
+/* --- 라디오 버튼 전용 스타일 --- */
+
+/* 라디오 버튼들을 가로로 배치 */
+.radio-container {
+    display: flex;       /* 옆으로 나란히 */
+    gap: 20px;           /* 버튼 사이 간격 */
+    margin-bottom: 20px; /* 아래쪽 여백 */
+}
+
+/* 개별 라디오 버튼 + 글자 묶음 */
+.radio-label {
+    display: flex;       /* 동그라미와 글자를 옆으로 */
+    align-items: center; /* 세로 중앙 정렬 */
+    cursor: pointer;     /* 마우스 올리면 손가락 모양 */
+    font-weight: normal; /* 글자 굵기 보통으로 */
+}
+
+/* 동그라미(input) 강제 성형 */
+.radio-label input[type="radio"] {
+    width: auto !important;  /* (중요) 100%로 늘어나지 않게 막음 */
+    margin: 0 8px 0 0;       /* 동그라미와 글자 사이 간격 */
+    height: 18px;            /* 동그라미 크기 적당히 */
+}
+
+/* 글자 스타일 */
+.radio-text {
+    font-size: 16px;
+    color: #333;
+}
+
+/* 입력창 테두리가 빨개지는 효과 (에러 시) */
+.input-error {
+    border-color: #ff4d4d !important; /* 강제로 빨간색 */
+    background-color: #fff0f0;
+}
+
+/* 경고 메시지 글자 스타일 */
+.error-message {
+    color: #ff4d4d;       /* 빨간색 */
+    font-size: 12px;      /* 작게 */
+    margin-top: 5px;      /* 입력창과 살짝 띄우기 */
+    margin-bottom: 10px;  /* 다음 입력창과 띄우기 */
+    display: none;        /* 평소엔 숨김 */
+    font-weight: bold;
+}
+
+/* 에러 메시지가 활성화되면 보이게 함 */
+.error-message.show {
+    display: block;
+}

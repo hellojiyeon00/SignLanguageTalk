@@ -1,0 +1,83 @@
+/* frontend/assets/landing.css */
+
+/* 전체 기본 폰트 및 여백 설정 */
+body {
+    margin: 0;
+    font-family: 'Noto Sans KR', sans-serif;
+}
+
+/* 상단 헤더 (네비게이션 바) */
+header {
+    padding: 15px 30px; /* 여백을 좀 더 넉넉하게 */
+    display: flex;
+    justify-content: space-between; /* 양쪽 끝으로 배치 (왼쪽:로고, 오른쪽:버튼) */
+    align-items: center; /* 세로 중앙 정렬 */
+    background-color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* 로고 영역 (임시) */
+.logo-area {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #007bff;
+}
+
+/* 버튼들을 감싸는 박스 */
+.auth-buttons {
+    display: flex;
+    gap: 10px; /* 버튼 사이 간격 */
+}
+
+/* 1. 로그인 버튼 (테두리만 있는 스타일) */
+.btn-login {
+    text-decoration: none;
+    color: #333;
+    padding: 8px 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    transition: all 0.2s;
+}
+
+.btn-login:hover {
+    background-color: #f0f0f0;
+    border-color: #bbb;
+}
+
+/* 2. 회원가입 버튼 (색이 채워진 강조 스타일) */
+.btn-signup {
+    text-decoration: none;
+    color: white;
+    background-color: #007bff; /* 파란색 배경 */
+    padding: 8px 16px;
+    border: 1px solid #007bff;
+    border-radius: 5px;
+    transition: all 0.2s;
+}
+
+.btn-signup:hover {
+    background-color: #0056b3;
+}
+
+/* 메인 소개 구역 (Hero Section) */
+.hero {
+    height: 80vh; /* 화면 높이의 80% */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); /* 그라데이션 배경 */
+    text-align: center;
+}
+
+h1 {
+    font-size: 3rem;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+p {
+    font-size: 1.2rem;
+    color: #666;
+    margin-bottom: 40px;
+}
