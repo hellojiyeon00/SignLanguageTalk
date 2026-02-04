@@ -1,15 +1,20 @@
-# app/core/config.py
 import os
 from dotenv import load_dotenv
 
-load_dotenv() # .env 파일의 내용을 읽어옵니다.
+load_dotenv()
 
 class Settings:
-    # 이창주 님이 관리하실 PostgreSQL 주소
-    DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:password123@localhost:5432/signtalk")
+    # DB 접속 정보 조립
+    DB_USER = os.getenv("DB_USER")
+    DB_PASSWORD = os.getenv("DB_PASSWORD")
+    DB_HOST = os.getenv("DB_HOST")
+    DB_PORT = os.getenv("DB_PORT")
+    DB_NAME = os.getenv("DB_NAME")
     
-    # JWT 발급을 위한 비밀키 [cite: 143]
-    SECRET_KEY = os.getenv("SECRET_KEY", "super-secret-key-123")
-    ALGORITHM = "HS256"
+    DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    
+    # 보안 키
+    SECRET_KEY = os.getenv("SECRET_KEY")
+    ALGORITHM = os.getenv("ALGORITHM", "HS256")
 
 settings = Settings()
