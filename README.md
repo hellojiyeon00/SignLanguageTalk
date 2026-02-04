@@ -158,7 +158,7 @@ project-root/
 ### 1) 저장소 클론
 
 ```bash
-git clone [https://github.com/](https://github.com/hellojiyeon00/SignLanguageTalk.git)
+git clone https://github.com/hellojiyeon00/SignLanguageTalk.git
 cd SignLanguageTalk
 ```
 
