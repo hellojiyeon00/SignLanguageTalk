@@ -137,3 +137,22 @@ def get_my_rooms(user_id: str, db: Session = Depends(get_db)):
         {"user_id": row[1], "user_name": row[2]} 
         for row in results
     ]
+    
+    
+@router.get("/history/{room_id}")
+def get_chat_history(room_id: int, db: Session = Depends(get_db)):
+    # member 테이블과 합쳐서(Join) 아이디를 함께 가져옵니다. 
+    history_sql = text("""
+        SELECT T.message, M.member_id, T.talk_date
+        FROM multicampus_schema.talk T
+        JOIN multicampus_schema.member M ON T.member_no = M.member_no
+        WHERE T.talk_room_id = :r_id
+        ORDER BY T.talk_date ASC
+    """)
+    
+    results = db.execute(history_sql, {"r_id": room_id}).fetchall()
+    
+    return [
+        {"message": row[0], "sender": row[1], "date": row[2].strftime("%H:%M")} 
+        for row in results
+    ]

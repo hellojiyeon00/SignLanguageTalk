@@ -1,5 +1,6 @@
 // frontend/js/chat.js
 
+let currentRoomId = null;
 const BASE_URL = "http://localhost:8000";
 const myId = localStorage.getItem("userId");
 
@@ -168,41 +169,97 @@ function closeSearch() {
 }
 
 // 채팅 시작 (방 입장)
-function startChat(friend) {
-    // 1. [추가] 만약 이미 대화 중인 방이 있었다면, 그 방에서 먼저 나갑니다.
+// function startChat(friend) {
+//     // 1. [추가] 만약 이미 대화 중인 방이 있었다면, 그 방에서 먼저 나갑니다.
+//     if (currentRoom) {
+//         socket.emit("leave_room", { room: currentRoom, username: myId });
+//     }
+
+//     // 2. 새로운 방 이름 생성 (ID 기반)
+//     const participants = [myId, friend.user_id].sort(); 
+//     const roomName = participants.join("_");
+//     currentRoom = roomName;
+
+//     // 3. 화면 초기화 및 스타일 변경
+//     document.querySelectorAll('.friend-item').forEach(item => item.classList.remove('active'));
+
+//     // --- 친구 목록 버튼 스타일 변경 로직 ---
+//     // 1. 모든 친구 항목에서 'active' 클래스를 뺏어옵니다.
+//     const allItems = document.querySelectorAll('.friend-item');
+//     allItems.forEach(item => item.classList.remove('active'));
+
+//     // 2. 현재 클릭한 친구 항목을 찾아서 'active' 클래스를 붙여줍니다.
+//     // (이름과 아이디가 적힌 텍스트를 기준으로 찾습니다)
+//     const targetText = `${friend.user_name} (${friend.user_id})`;
+//     allItems.forEach(item => {
+//         if (item.textContent === targetText) {
+//             item.classList.add('active');
+//         }
+//     });
+//     // ------------------------------------------
+
+//     console.log(`🏠 입장: ${roomName}`);
+//     document.getElementById("chatTitle").textContent = `${friend.user_name}님과의 대화`;
+//     document.getElementById("messages").innerHTML = ""; 
+
+//     socket.emit("join_room", { room: roomName, username: myId });
+// }
+
+async function startChat(friend) {
+    // 1. 이전 방 퇴장 (기존 로직 유지)
     if (currentRoom) {
         socket.emit("leave_room", { room: currentRoom, username: myId });
     }
 
-    // 2. 새로운 방 이름 생성 (ID 기반) [cite: 2026-01-09]
-    const participants = [myId, friend.user_id].sort(); 
-    const roomName = participants.join("_");
-    currentRoom = roomName;
+    try {
+        // 2. [신규] 서버에서 방 번호(talk_room_id)를 먼저 알아옵니다.
+        const roomRes = await fetch(`${BASE_URL}/chat/room`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ my_id: myId, target_id: friend.user_id })
+        });
+        const roomData = await roomRes.json();
+        currentRoomId = roomData.room_id; // DB 저장을 위해 숫자로 된 ID를 전역 변수에 저장
 
-    // 3. 화면 초기화 및 스타일 변경
-    document.querySelectorAll('.friend-item').forEach(item => item.classList.remove('active'));
-    
-    // --- 친구 목록 버튼 스타일 변경 로직 ---
-    // 1. 모든 친구 항목에서 'active' 클래스를 뺏어옵니다.
-    const allItems = document.querySelectorAll('.friend-item');
-    allItems.forEach(item => item.classList.remove('active'));
+        // 3. [신규] 해당 방의 과거 대화 내역(history)을 서버에 요청합니다.
+        const historyRes = await fetch(`${BASE_URL}/chat/history/${currentRoomId}`);
+        const historyArr = await historyRes.json();
 
-    // 2. 현재 클릭한 친구 항목을 찾아서 'active' 클래스를 붙여줍니다.
-    // (이름과 아이디가 적힌 텍스트를 기준으로 찾습니다)
-    const targetText = `${friend.user_name} (${friend.user_id})`;
-    allItems.forEach(item => {
-        if (item.textContent === targetText) {
-            item.classList.add('active');
-        }
-    });
-    // ------------------------------------------
+        // 4. 화면 초기화 (메시지 창 비우기)
+        document.getElementById("messages").innerHTML = ""; 
 
-    console.log(`🏠 입장: ${roomName}`);
-    document.getElementById("chatTitle").textContent = `${friend.user_name}님과의 대화`;
-    document.getElementById("messages").innerHTML = ""; 
+        // 5. [신규] 받아온 과거 내역을 화면에 하나씩 그려줍니다.
+        historyArr.forEach(chat => {
+            displayMessage(chat.sender, chat.message);
+        });
 
-    socket.emit("join_room", { room: roomName, username: myId });
+        // 6. [기존 유지] 새로운 방 이름 생성 (ID 기반)
+        const participants = [myId, friend.user_id].sort(); 
+        const roomName = participants.join("_");
+        currentRoom = roomName;
+
+        // 7. [기존 유지] 친구 목록 버튼 스타일 변경 (Active 클래스)
+        const allItems = document.querySelectorAll('.friend-item');
+        allItems.forEach(item => item.classList.remove('active'));
+
+        const targetText = `${user.user_name} (${user.user_id})`; // 목록에 표시된 텍스트와 비교
+        allItems.forEach(item => {
+            if (item.textContent === targetText) {
+                item.classList.add('active'); // 클릭한 친구만 강조
+            }
+        });
+
+        // 8. [기존 유지] 채팅창 제목 변경 및 소켓 입장
+        console.log(`🏠 입장: ${roomName}`);
+        document.getElementById("chatTitle").textContent = `${friend.user_name}님과의 대화`;
+        socket.emit("join_room", { room: roomName, username: myId });
+
+    } catch (error) {
+        console.error("방 정보를 가져오거나 대화 내역을 불러오는 데 실패했습니다.", error);
+        alert("대화 내역을 불러올 수 없습니다.");
+    }
 }
+
 // 메시지 전송 (버튼 클릭 시)
 function sendMessage() {
     const input = document.getElementById("messageInput");
@@ -219,6 +276,7 @@ function sendMessage() {
     // 서버와 약속한 Key 이름(username, message)을 정확히 사용
     socket.emit("send_message", {
         room: currentRoom,
+        room_id: currentRoomId, // [추가] DB 저장을 위해 필수!
         username: myId,
         message: msg
     });
