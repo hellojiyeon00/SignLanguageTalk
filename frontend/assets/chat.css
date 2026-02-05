@@ -164,3 +164,17 @@ body { margin: 0; font-family: 'Noto Sans KR', sans-serif; display: flex; height
     font-weight: bold;
     box-shadow: inset 0 0 5px rgba(0,0,0,0.1); /* 안쪽으로 살짝 그림자 */
 }
+
+/* 시간 글자 스타일 */
+.message-time {
+    font-size: 10px;        /* 아주 작게 */
+    color: #666;           /* 연한 회색 */
+    margin: 0 5px;         /* 말풍선과 5픽셀 정도 띄우기 */
+    align-self: flex-end;  /* 말풍선의 바닥 부분에 정렬 */
+}
+
+/* 내가 보낸 메시지일 때의 시간 위치 */
+.message-mine .message-time {
+    /* 내가 보낸 건 시간-말풍선 순으로 보이게 함 (말풍선 왼쪽) */
+    order: -1; 
+}

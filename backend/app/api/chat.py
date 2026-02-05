@@ -143,7 +143,7 @@ def get_my_rooms(user_id: str, db: Session = Depends(get_db)):
 def get_chat_history(room_id: int, db: Session = Depends(get_db)):
     # member 테이블과 합쳐서(Join) 아이디를 함께 가져옵니다. 
     history_sql = text("""
-        SELECT T.message, M.member_id, T.talk_date
+        SELECT T.message, M.member_id, M.full_name, T.talk_date
         FROM multicampus_schema.talk T
         JOIN multicampus_schema.member M ON T.member_no = M.member_no
         WHERE T.talk_room_id = :r_id
@@ -153,6 +153,10 @@ def get_chat_history(room_id: int, db: Session = Depends(get_db)):
     results = db.execute(history_sql, {"r_id": room_id}).fetchall()
     
     return [
-        {"message": row[0], "sender": row[1], "date": row[2].strftime("%H:%M")} 
-        for row in results
+        {
+            "message": row[0], 
+            "sender": row[1],      # 아이디 (판별용)
+            "sender_name": row[2], # [추가] 성명 (표시용)
+            "date": row[3].strftime("%H:%M")
+        } for row in results
     ]

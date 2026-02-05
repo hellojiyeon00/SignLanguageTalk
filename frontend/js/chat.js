@@ -12,9 +12,10 @@ let currentRoom = null;
 socket.on("receive_message", (data) => {
     console.log("📥 서버에서 받은 데이터:", data); // F12 콘솔에서 확인 가능
     
-    // 데이터의 이름표가 'sender'와 'message'인지 확인
     if (data.sender && data.message) {
-        displayMessage(data.sender, data.message);
+        // 서버가 준 시간이 없으면 내 컴퓨터 현재 시간을 씁니다.
+        const time = data.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+        displayMessage(data.sender, data.sender_name, data.message, data.time);
     }
 });
 
@@ -190,11 +191,11 @@ async function startChat(friend) {
         const historyArr = await historyRes.json();
 
         // 4. 화면 초기화 (메시지 창 비우기)
-        document.getElementById("messages").innerHTML = ""; 
+        document.getElementById("messages").innerHTML = "";
 
         // 5. [신규] 받아온 과거 내역을 화면에 하나씩 그려줍니다.
         historyArr.forEach(chat => {
-            displayMessage(chat.sender, chat.message);
+    displayMessage(chat.sender, chat.sender_name, chat.message, chat.date); 
         });
 
         // 6. [기존 유지] 새로운 방 이름 생성 (ID 기반)
@@ -248,41 +249,44 @@ function sendMessage() {
     input.value = "";
 }
 
-// [수정됨] 화면에 메시지 그리기 (카카오톡 스타일)
-function displayMessage(sender, msg) {
+function displayMessage(senderId, senderName, msg, time) {
     const msgBox = document.getElementById("messages");
     
-    // 1. 메시지 전체를 감싸는 틀 생성
     const rowDiv = document.createElement("div");
-    rowDiv.className = "message-row";
+    rowDiv.className = `message-row ${sender === myId ? "message-mine" : "message-other"}`;
 
-    // 2. 내가 보낸 건지 확인 (중요!)
-    if (sender === myId) {
-        rowDiv.classList.add("message-mine"); // 오른쪽 배치 클래스 추가
-    } else {
-        rowDiv.classList.add("message-other"); // 왼쪽 배치 클래스 추가
-    }
+    // [중요] '내 메시지인지' 판별할 때는 고유한 ID(senderId)를 사용합니다.
+    rowDiv.className = `message-row ${senderId === myId ? "message-mine" : "message-other"}`;
 
-    // 3. 이름표 만들기
-    // (내가 보낸 메시지는 CSS에서 display: none으로 숨겨집니다)
+    // 이름표
     const nameDiv = document.createElement("div");
     nameDiv.className = "message-name";
-    nameDiv.textContent = sender;
+    nameDiv.textContent = senderName;
 
-    // 4. 말풍선 만들기
+    // 말풍선과 시간을 가로로 나란히 놓기 위한 박스
+    const contentDiv = document.createElement("div");
+    contentDiv.style.display = "flex";
+    contentDiv.style.alignItems = "flex-end"; // 둘 다 바닥에 맞춤
+
+    // 말풍선
     const bubbleDiv = document.createElement("div");
     bubbleDiv.className = "message-bubble";
     bubbleDiv.textContent = msg;
 
-    // 5. 조립하기 (틀 안에 이름과 말풍선을 넣음)
-    rowDiv.appendChild(nameDiv);
-    rowDiv.appendChild(bubbleDiv);
+    // [시간 추가]
+    const timeSpan = document.createElement("span");
+    timeSpan.className = "message-time";
+    timeSpan.textContent = time; // "14:30" 글자를 넣음
 
-    // 6. 화면에 추가
-    msgBox.appendChild(rowDiv);
+    // 조립: 내용 박스 안에 말풍선과 시간을 넣습니다.
+    contentDiv.appendChild(bubbleDiv);
+    contentDiv.appendChild(timeSpan);
     
-    // 7. 스크롤 맨 아래로 내리기
-    msgBox.scrollTop = msgBox.scrollHeight;
+    rowDiv.appendChild(nameDiv);
+    rowDiv.appendChild(contentDiv); // 최종 조립
+
+    msgBox.appendChild(rowDiv);
+    msgBox.scrollTop = msgBox.scrollHeight; // 새 메시지가 오면 맨 아래로 스크롤
 }
 
 // 6. 로그아웃

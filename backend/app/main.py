@@ -2,9 +2,10 @@
 import socketio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime
+from sqlalchemy import text
 
 from app.core.database import SessionLocal
-from sqlalchemy import text
 from app.api.auth import router as auth_router
 from app.api.chat import router as chat_router
 
@@ -50,13 +51,23 @@ async def handle_send_message(sid, data):
     room_name = data.get("room")   # 소켓 통신용 이름 (ID_ID)
     sender_id = data.get("username") # 보낸 사람의 아이디 (문자)
     msg = data.get("message")
+    
+    now = datetime.now().strftime("%H:%M")
 
+    # if room_id and sender_id and msg:
+    #     db = SessionLocal()
+    #     try:
+    #         # 1. 아이디(문자)로 회원 번호(숫자) 찾기
+    #         get_no = text("SELECT member_no FROM multicampus_schema.member WHERE member_id = :id")
+    #         member_no = db.execute(get_no, {"id": sender_id}).scalar()
+    
     if room_id and sender_id and msg:
         db = SessionLocal()
         try:
-            # 1. 아이디(문자)로 회원 번호(숫자) 찾기
-            get_no = text("SELECT member_no FROM multicampus_schema.member WHERE member_id = :id")
-            member_no = db.execute(get_no, {"id": sender_id}).scalar()
+            # [수정] 성명(full_name)도 같이 가져옵니다.
+            get_user = text("SELECT member_no, full_name FROM multicampus_schema.member WHERE member_id = :id")
+            user_info = db.execute(get_user, {"id": sender_id}).fetchone()
+            member_no, sender_name = user_info[0], user_info[1]
 
             # 2.  정의서 구조대로 talk 테이블에 저장
             insert_talk = text("""
@@ -80,4 +91,15 @@ async def handle_send_message(sid, data):
             db.close()
 
         # 3. 상대방에게 실시간 전달
-        await sio.emit("receive_message", {"sender": sender_id, "message": msg}, room=room_name)
+        # await sio.emit("receive_message", {
+        #     "sender": sender_id, 
+        #     "message": msg,
+        #     "time": now  
+        # }, room=room_name)
+        
+        await sio.emit("receive_message", {
+                "sender": sender_id,
+                "sender_name": sender_name, # [추가]
+                "message": msg,
+                "time": datetime.now().strftime("%H:%M")
+        }, room=room_name)
