@@ -83,7 +83,7 @@ def get_or_create_room(req: RoomCreateRequest, db: Session = Depends(get_db)):
         INSERT INTO multicampus_schema.talk_room (
             talk_room_id, member_no1, member_no2, create_user
         ) VALUES (
-            nextval('talk_room_id_s'), :m1, :m2, :creator
+            nextval('multicampus_schema.talk_room_id_s'), :m1, :m2, :creator
         ) RETURNING talk_room_id
     """)
     

@@ -30,11 +30,15 @@ async def handle_join_room(sid, data):
     print(f"🚪 입장 시도: {username} -> {room}") # 서버 터미널에 찍힘
     
     await sio.enter_room(sid, room)
-    # 방 전체에 입장 알림
-    await sio.emit("receive_message", {
-        "sender": "시스템",
-        "message": f"{username}님이 입장했습니다."
-    }, room=room)
+    print(f"🚪 {username}님이 {room} 방에 입장했습니다.")
+    
+@sio.on("leave_room")
+async def handle_leave_room(sid, data):
+    room = data.get("room")
+    username = data.get("username")
+    if room:
+        await sio.leave_room(sid, room) # 서버에서 방 퇴장 처리
+        print(f"🚪 {username}님이 {room} 방에서 나갔습니다.")
 
 @sio.on("send_message")
 async def handle_send_message(sid, data):

@@ -46,14 +46,15 @@ def signup(user_data: UserSignup, db: Session = Depends(get_db)):
             member_id, passwd, full_name, mobile_phone, 
             e_mail_address, deaf_muteness_section_code, create_user
         ) VALUES (
-            :id, :pw, :name, :phone, :email, :is_deaf, :creator
+            :id, 
+            crypt(:pw, gen_salt('bf')),  -- DB가 직접 암호화하도록 명령!
+            :name, :phone, :email, :is_deaf, :creator
         )
     """)
 
-    # 4. 데이터 매핑
     params = {
         "id": user_data.user_id,
-        "pw": hashed_pw,
+        "pw": user_data.password, # 암호화 안 된 평문을 보냄 (DB가 처리함)
         "name": user_data.user_name,
         "phone": user_data.phone_number,
         "email": user_data.email,
@@ -61,39 +62,42 @@ def signup(user_data: UserSignup, db: Session = Depends(get_db)):
         "creator": user_data.user_id
     }
 
-    # 5. 실행
     try:
         db.execute(insert_sql, params)
-        db.commit() # 저장
+        db.commit()
     except Exception as e:
         db.rollback()
-        print(f"에러 발생: {e}")
-        raise HTTPException(status_code=500, detail="서버 오류가 발생했습니다.")
+        raise HTTPException(status_code=500, detail=f"가입 실패: {str(e)}")
     
-    return {"message": f"{user_data.user_name}님, 가입을 환영합니다!"}
+    return {"message": "가입을 환영합니다!"}
 
 # --- [로그인] ---
 @router.post("/login")
 def login(login_data: UserLogin, db: Session = Depends(get_db)):
     # 1. 조회 SQL
     login_sql = text("""
-        SELECT member_id, passwd, full_name 
+        SELECT member_id, full_name 
         FROM multicampus_schema.member
-        WHERE member_id = :id
+        WHERE member_id = :id 
+          AND passwd = crypt(:pw, passwd)
     """)
     
-    user = db.execute(login_sql, {"id": login_data.user_id}).fetchone()
+    user = db.execute(login_sql, {
+        "id": login_data.user_id, 
+        "pw": login_data.password
+    }).fetchone()
     
-    # 2. 검증 (user 순서: [0]no, [1]id, [2]passwd, [3]name)
-    if not user or not verify_password(login_data.password, user[2]):
+    # 만약 아이디가 없거나 비번이 틀리면 user는 None(빈값)이 됩니다.
+    if not user:
         raise HTTPException(status_code=401, detail="아이디 또는 비밀번호가 틀렸습니다.")
 
-    # 3. 토큰 발급
-    access_token = create_access_token(data={"sub": user[1]}) # user[1]은 member_id
+    # 로그인 성공 시 토큰 발급 (user[0]은 member_id)
+    access_token = create_access_token(data={"sub": user[0]})
     
     return {
         "message": "로그인 성공!",
         "access_token": access_token,
         "token_type": "bearer",
-        "user_name": user[3] # user[3]는 full_name
+        "user_id": user[0],    # [추가] 404 에러 해결을 위해 '진짜 아이디'를 넘겨줍니다.
+        "user_name": user[1]   # [수정] user[1]은 이제 '이름'입니다.
     }

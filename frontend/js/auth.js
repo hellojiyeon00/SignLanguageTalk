@@ -58,12 +58,10 @@ async function handleLogin() {
         const data = await response.json();
 
         if (response.ok) {
-            // 성공 시: 받은 JWT(입장권)를 브라우저 저장소(localStorage)에 보관
             localStorage.setItem("accessToken", data.access_token);
-            localStorage.setItem("userName", data.user_name);
-            alert(data.message); // "로그인 성공!"
-            
-            // 메인 페이지(채팅방)로 이동 (추후 구현)
+            localStorage.setItem("userId", data.user_id);     // [추가] 진짜 아이디 저장
+            localStorage.setItem("userName", data.user_name); // 이름은 화면 표시용
+            alert(data.message);
             window.location.href = "index.html"; 
         } else {
             // 실패 시: 백엔드가 보낸 에러 메시지 출력
