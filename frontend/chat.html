@@ -22,15 +22,21 @@
             </div>
 
             <div class="search-area" style="padding: 10px; border-bottom: 1px solid #ddd;">
-                <input type="text" id="searchInput" placeholder="아이디/이름 검색" 
-                    style="width: 65%; padding: 5px;">
-                <button onclick="searchUser()" style="width: 30%; padding: 5px;">검색</button>
+                <div style="display: flex; gap: 5px; margin-bottom: 5px;">
+                    <input type="text" id="searchName" placeholder="이름 검색" style="flex: 1; padding: 5px;">
+                    <input type="text" id="searchId" placeholder="ID 검색" style="flex: 1; padding: 5px;">
+                </div>
+                <button onclick="searchUser()" style="width: 100%; padding: 5px; background-color: #f0f0f0; border: 1px solid #ccc; cursor: pointer;">
+                    검색
+                </button>
             </div>
 
-            <div id="searchResultArea" style="display:none; background:#eee; padding:10px;">
-                <h5>검색 결과</h5>
-                <ul id="searchResultList" style="list-style:none; padding:0;"></ul>
-                <button onclick="closeSearch()" style="width:100%; margin-top:5px;">닫기</button>
+            <div id="searchResultArea" style="display:none; background:#f9f9f9; padding:10px; border-bottom:1px solid #ddd;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h5 style="margin:0;">검색 결과</h5>
+                    <button onclick="closeSearch()" style="font-size:12px;">닫기</button>
+                </div>
+                <ul id="searchResultList" style="list-style:none; padding:0; margin-top:10px;"></ul>
             </div>
 
             <div class="friend-list-area">

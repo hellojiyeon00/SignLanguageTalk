@@ -64,7 +64,7 @@ def get_or_create_room(req: RoomCreateRequest, db: Session = Depends(get_db)):
     if not my_no or not target_no:
         raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
 
-    # (2) 이미 둘 사이에 만들어진 방이 있는지 확인합니다. [cite: 5]
+    # (2) 이미 둘 사이에 만들어진 방이 있는지 확인합니다.
     # (내가 1번이고 걔가 2번이거나) OR (내가 2번이고 걔가 1번인 경우)
     check_room_sql = text("""
         SELECT talk_room_id FROM multicampus_schema.talk_room

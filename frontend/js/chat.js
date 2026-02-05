@@ -40,9 +40,9 @@ document.addEventListener("DOMContentLoaded", () => {
 // 1. [수정됨] 내 친구 목록 가져오기
 async function fetchMyFriends() {
     try {
-        // API 주소가 /auth/users 에서 /auth/friends 로 바뀌었습니다!
+        // 주소가 /auth/friends -> /chat/list 로 바뀌었습니다.
         // 내 ID를 쿼리 파라미터(?user_id=...)로 같이 보냅니다.
-        const response = await fetch(`${BASE_URL}/auth/friends?user_id=${myId}`);
+        const response = await fetch(`${BASE_URL}/chat/list?user_id=${myId}`);
         const friends = await response.json();
         
         const listContainer = document.getElementById("friendList");
@@ -68,59 +68,83 @@ async function fetchMyFriends() {
 
 // 2. [신규] 친구 검색 기능
 async function searchUser() {
-    const keyword = document.getElementById("searchInput").value;
-    if (!keyword) {
-        alert("검색어를 입력하세요");
+    // 1. 두 입력창의 값을 가져옵니다.
+    const nameVal = document.getElementById("searchName").value.trim();
+    const idVal = document.getElementById("searchId").value.trim();
+
+    // 2. 둘 다 비어있으면 경고
+    if (!nameVal && !idVal) {
+        alert("이름 또는 아이디를 입력해주세요.");
         return;
     }
 
     try {
-        // 검색 API 호출
-        const response = await fetch(`${BASE_URL}/auth/search?keyword=${keyword}&user_id=${myId}`);
+        // 3. 쿼리 파라미터 조립 (?name=...&member_id=...)
+        // 값이 있는 것만 보냅니다.
+        let queryParams = `my_id=${myId}`;
+        if (nameVal) queryParams += `&name=${encodeURIComponent(nameVal)}`;
+        if (idVal) queryParams += `&member_id=${encodeURIComponent(idVal)}`;
+
+        // 4. API 호출
+        const response = await fetch(`${BASE_URL}/chat/search?${queryParams}`);
         const results = await response.json();
 
-        // 검색 결과창 보여주기
+        // 5. 결과 표시 (기존 로직과 동일)
         const resultArea = document.getElementById("searchResultArea");
         const resultList = document.getElementById("searchResultList");
-        resultArea.style.display = "block"; // 숨겨둔 창 열기
-        resultList.innerHTML = ""; // 기존 결과 초기화
+        resultArea.style.display = "block";
+        resultList.innerHTML = "";
 
         if (results.length === 0) {
-            resultList.innerHTML = "<li>검색 결과가 없습니다.</li>";
+            resultList.innerHTML = "<li style='padding:5px; color:#777;'>검색 결과가 없습니다.</li>";
             return;
         }
 
         results.forEach(user => {
             const li = document.createElement("li");
-            li.style.padding = "5px";
-            li.style.borderBottom = "1px solid #ccc";
+            li.style.padding = "8px 5px";
+            li.style.borderBottom = "1px solid #eee";
             li.style.display = "flex";
             li.style.justifyContent = "space-between";
-            
-            // 이름과 '추가' 버튼 만들기
+            li.style.alignItems = "center";
+        
             li.innerHTML = `
-                <span>${user.user_name} (${user.user_id})</span>
-                <button onclick="addFriend('${user.user_id}')" style="font-size:12px;">추가</button>
+                <div>
+                    <span style="font-weight:bold;">${user.user_name}</span>
+                    <span style="font-size:12px; color:#666;">(${user.member_id})</span>
+                </div>
+                <button onclick="addFriend('${user.member_id}')" 
+                    style="font-size:12px; padding:3px 8px; cursor:pointer;">
+                    대화
+                </button>
             `;
             resultList.appendChild(li);
         });
 
     } catch (error) {
         console.error("검색 실패", error);
+        alert("검색 중 오류가 발생했습니다.");
     }
 }
 
+// [수정] 검색창 닫기 (입력값도 초기화)
+function closeSearch() {
+    document.getElementById("searchResultArea").style.display = "none";
+    document.getElementById("searchName").value = "";
+    document.getElementById("searchId").value = "";
+}
+
 // 3. [신규] 친구 추가 기능
-async function addFriend(friendId) {
-    if(!confirm("이 사용자를 친구로 추가하시겠습니까?")) return;
+async function addFriend(targetId) {
+    if(!confirm("이 사용자와 대화를 시작하시겠습니까?")) return;
 
     try {
-        const response = await fetch(`${BASE_URL}/auth/friends`, {
+        const response = await fetch(`${BASE_URL}/chat/room`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                user_id: myId,
-                friend_id: friendId
+                my_id: myId,
+                target_id: targetId
             })
         });
 
