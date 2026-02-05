@@ -15,7 +15,7 @@ socket.on("receive_message", (data) => {
     if (data.sender && data.message) {
         // 서버가 준 시간이 없으면 내 컴퓨터 현재 시간을 씁니다.
         const time = data.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-        displayMessage(data.sender, data.sender_name, data.message, data.time);
+        displayMessage(data.sender, data.sender_name, data.message, time);
     }
 });
 
@@ -253,7 +253,7 @@ function displayMessage(senderId, senderName, msg, time) {
     const msgBox = document.getElementById("messages");
     
     const rowDiv = document.createElement("div");
-    rowDiv.className = `message-row ${sender === myId ? "message-mine" : "message-other"}`;
+    rowDiv.className = `message-row ${senderId === myId ? "message-mine" : "message-other"}`;
 
     // [중요] '내 메시지인지' 판별할 때는 고유한 ID(senderId)를 사용합니다.
     rowDiv.className = `message-row ${senderId === myId ? "message-mine" : "message-other"}`;
