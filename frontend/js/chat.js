@@ -168,43 +168,7 @@ function closeSearch() {
     document.getElementById("searchInput").value = "";
 }
 
-// 채팅 시작 (방 입장)
-// function startChat(friend) {
-//     // 1. [추가] 만약 이미 대화 중인 방이 있었다면, 그 방에서 먼저 나갑니다.
-//     if (currentRoom) {
-//         socket.emit("leave_room", { room: currentRoom, username: myId });
-//     }
-
-//     // 2. 새로운 방 이름 생성 (ID 기반)
-//     const participants = [myId, friend.user_id].sort(); 
-//     const roomName = participants.join("_");
-//     currentRoom = roomName;
-
-//     // 3. 화면 초기화 및 스타일 변경
-//     document.querySelectorAll('.friend-item').forEach(item => item.classList.remove('active'));
-
-//     // --- 친구 목록 버튼 스타일 변경 로직 ---
-//     // 1. 모든 친구 항목에서 'active' 클래스를 뺏어옵니다.
-//     const allItems = document.querySelectorAll('.friend-item');
-//     allItems.forEach(item => item.classList.remove('active'));
-
-//     // 2. 현재 클릭한 친구 항목을 찾아서 'active' 클래스를 붙여줍니다.
-//     // (이름과 아이디가 적힌 텍스트를 기준으로 찾습니다)
-//     const targetText = `${friend.user_name} (${friend.user_id})`;
-//     allItems.forEach(item => {
-//         if (item.textContent === targetText) {
-//             item.classList.add('active');
-//         }
-//     });
-//     // ------------------------------------------
-
-//     console.log(`🏠 입장: ${roomName}`);
-//     document.getElementById("chatTitle").textContent = `${friend.user_name}님과의 대화`;
-//     document.getElementById("messages").innerHTML = ""; 
-
-//     socket.emit("join_room", { room: roomName, username: myId });
-// }
-
+// 4. 채팅 시작 함수 (친구 클릭 시)
 async function startChat(friend) {
     // 1. 이전 방 퇴장 (기존 로직 유지)
     if (currentRoom) {
@@ -242,7 +206,7 @@ async function startChat(friend) {
         const allItems = document.querySelectorAll('.friend-item');
         allItems.forEach(item => item.classList.remove('active'));
 
-        const targetText = `${user.user_name} (${user.user_id})`; // 목록에 표시된 텍스트와 비교
+        const targetText = `${friend.user_name} (${friend.user_id})`; // 목록에 표시된 텍스트와 비교
         allItems.forEach(item => {
             if (item.textContent === targetText) {
                 item.classList.add('active'); // 클릭한 친구만 강조

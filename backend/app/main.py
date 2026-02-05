@@ -2,6 +2,9 @@
 import socketio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from app.core.database import SessionLocal
+from sqlalchemy import text
 from app.api.auth import router as auth_router
 from app.api.chat import router as chat_router
 
@@ -42,20 +45,6 @@ async def handle_leave_room(sid, data):
 
 @sio.on("send_message")
 async def handle_send_message(sid, data):
-    # room = data.get("room")
-    # sender = data.get("username")
-    # msg = data.get("message")
-    
-    # # 데이터가 비어있는지 확인
-    # print(f"📩 메시지 수신: [{room}] {sender}: {msg}")
-    
-    # if room and sender and msg:
-    #     await sio.emit("receive_message", {
-    #         "sender": sender,
-    #         "message": msg
-    #     }, room=room)
-    # else:
-    #     print("⚠️ 잘못된 데이터 수신!")
     
     room_id = data.get("room_id") # 숫자로 된 방 ID
     room_name = data.get("room")   # 소켓 통신용 이름 (ID_ID)
@@ -71,8 +60,11 @@ async def handle_send_message(sid, data):
 
             # 2.  정의서 구조대로 talk 테이블에 저장
             insert_talk = text("""
-                INSERT INTO multicampus_schema.talk (talk_room_id, member_no, message, create_user)
-                VALUES (:r_id, :m_no, :msg, :c_user)
+                INSERT INTO multicampus_schema.talk (
+                    talk_room_id, member_no, talk_date, message, create_user
+                ) VALUES (
+                    :r_id, :m_no, CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Seoul', :msg, :c_user
+                )
             """)
             db.execute(insert_talk, {
                 "r_id": room_id, 
