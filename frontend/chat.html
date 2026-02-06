@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <title>수어톡 채팅</title>
     <link rel="stylesheet" href="assets/chat.css">
+    <!-- 카메라 팝업 CSS 추가 -->
+    <link rel="stylesheet" href="assets/camera.css">
 </head>
 <body>
     <script>
@@ -53,13 +55,44 @@
             <div class="chat-messages" id="messages">
                 </div>
             <div class="chat-input">
+                <!-- 📷 카메라 버튼 -->
+                <button id="signCameraBtn" title="수어 입력">📷</button>
                 <input type="text" id="messageInput" placeholder="메시지를 입력하세요...">
                 <button onclick="sendMessage()">전송</button>
             </div>
         </div>
     </div>
 
+    <!-- ===== 카메라 팝업 오버레이 ===== -->
+    <div id="cameraOverlay"></div>
+
+    <!-- ===== 카메라 팝업 ===== -->
+    <div id="cameraModal">
+        <header>
+            <span>📹 수어 입력</span>
+            <button id="closeCameraBtn">✖</button>
+        </header>
+
+        <video id="videoInput" width="480" height="360" autoplay playsinline></video>
+
+        <!-- 🎮 제어 버튼 -->
+        <div class="camera-controls">
+            <button id="startBtn">▶️ 시작</button>
+            <button id="stopBtn" disabled>⏹️ 종료</button>
+        </div>
+
+        <!-- 상태 표시 -->
+        <div id="statusText"></div>
+    </div>
+
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <!-- MediaPipe 라이브러리 -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic/holistic.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+
     <script src="js/chat.js"></script>
+    <!-- 카메라 기능 스크립트 -->
+    <script src="js/camera.js"></script>
 </body>
 </html>
