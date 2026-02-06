@@ -1,21 +1,59 @@
+# backend/app/core/database.py
+
+# ==============================================================================
+# 1. 라이브러리 임포트
+# ==============================================================================
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, declarative_base
 from app.core.config import settings
 
-# 1. 엔진 생성
-engine = create_engine(settings.DATABASE_URL)
+# ==============================================================================
+# 2. 엔진(Engine) 생성
+# 엔진은 데이터베이스와의 실제 연결(Connection)을 관리하는 가장 핵심적인 객체입니다.
+# 공장에 비유하면 '발전기'와 같습니다.
+# ==============================================================================
 
-# 2. 세션 생성기
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+engine = create_engine(
+    settings.DATABASE_URL, # config.py에서 만든 접속 주소 (postgresql://...)
+    
+    # [옵션 설명]
+    # echo=True: 실행되는 모든 SQL 쿼리를 터미널에 출력합니다. (개발할 때 디버깅용으로 좋음)
+    # pool_pre_ping=True: DB 연결이 끊어졌는지 확인하고, 끊어졌다면 재연결을 시도합니다. 
+    # (이게 없으면 "서버가 멈췄어요" 에러가 자주 납니다. 필수 옵션!)
+    pool_pre_ping=True
+)
 
-# 3. 모델들의 조상님
+# ==============================================================================
+# 3. 세션 생성기 (SessionLocal)
+# 데이터베이스와 대화할 '전화기'를 찍어내는 공장입니다.
+# 요청이 들어올 때마다 이 공장에서 '전화기(Session)'를 하나씩 새로 만듭니다.
+# ==============================================================================
+SessionLocal = sessionmaker(
+    autocommit=False, # True면 쿼리 날리자마자 바로 저장됨. 실수 방지를 위해 False로 하고 나중에 commit()을 직접 호출합니다.
+    autoflush=False,  # 데이터를 읽기 전에 변경사항을 자동으로 저장하지 않도록 설정합니다.
+    bind=engine       # 위에서 만든 엔진(발전기)에 연결합니다.
+)
+
+# ==============================================================================
+# 4. 모델들의 조상님 (Base)
+# 앞으로 만들 모든 DB 테이블 모델(User, ChatRoom 등)은 이 클래스를 상속받아야 합니다.
+# 그래야 SQLAlchemy가 "아, 얘네가 내가 관리해야 할 테이블이구나" 하고 알아챕니다.
+# ==============================================================================
 Base = declarative_base()
 
-# 4. 세션 배달부 (Dependency)
+# ==============================================================================
+# 5. 세션 배달부 (Dependency)
+# API 라우터(웨이터)들이 "DB 좀 쓸게요~" 하면 이 함수가 실행됩니다.
+# ==============================================================================
 def get_db():
-    db = SessionLocal()
+    """
+    [DB 세션 생성 및 관리 함수]
+    1. DB 연결(세션)을 하나 엽니다.
+    2. API 처리가 끝날 때까지 빌려줍니다 (yield).
+    3. 일이 끝나면 반드시 문을 닫습니다 (close).
+    """
+    db = SessionLocal() # 전화기(세션) 생성
     try:
-        yield db
+        yield db # 라우터에게 전화기 건네줌 (여기서 API 로직이 실행됨)
     finally:
-        db.close()
+        db.close() # API 처리가 끝나면 전화기 끊음 (자원 낭비 방지)

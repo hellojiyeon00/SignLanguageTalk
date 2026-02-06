@@ -1,204 +1,175 @@
 // frontend/js/auth.js
 
-// [설정] 백엔드 서버 주소 (팀장님의 uvicorn 주소)
-const BASE_URL = "http://localhost:8000";
+// 1. 서버 설정
+const API_BASE_URL = "http://localhost:8000";
 
-// 유효성 검사
+// 2. 유효성 검사 규칙 (정규식)
 const validators = {
-    // 아이디: 영문/숫자 4자 이상
-    id: (val) => /^[a-zA-Z0-9]{4,}$/.test(val),
-    // 비밀번호: 8자 이상
-    pw: (val) => val.length >= 8,
-    // 이름: 한글 2자 이상
-    name: (val) => /^[가-힣]{2,}$/.test(val),
-    // 전화번호: 010-0000-0000 형식
-    phone: (val) => /^010-\d{4}-\d{4}$/.test(val),
-    // 이메일: 이메일 형식
-    email: (val) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)
+    id: (val) => /^[a-zA-Z0-9]{4,}$/.test(val),       // 영문/숫자 4자 이상
+    pw: (val) => val.length >= 8,                     // 8자 이상
+    name: (val) => /^[가-힣]{2,}$/.test(val),         // 한글 2자 이상
+    phone: (val) => /^010-\d{4}-\d{4}$/.test(val),    // 010-0000-0000
+    email: (val) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) // 이메일 형식
 };
 
-function toggleError(inputId, errorId, isValid) {
+// [UI] 에러 메시지 표시/숨김 함수
+function toggleError(inputId, isValid, errorMessage = "") {
     const input = document.getElementById(inputId);
-    const errorMsg = document.getElementById(errorId);
-    
-    // 해당 요소가 없으면(예: 로그인 페이지라 회원가입 창이 없을 때) 무시
-    if (!input || !errorMsg) return isValid; 
+    // 에러 메시지를 보여줄 p 태그 찾기 (input 바로 다음 형제 요소라고 가정하거나, ID로 찾음)
+    // 여기서는 HTML 구조에 맞춰 유연하게 처리
+    let errorTag = input.nextElementSibling; 
+    while(errorTag && !errorTag.classList.contains("error-message")) {
+        errorTag = errorTag.nextElementSibling;
+    }
+
+    if (!input) return;
 
     if (isValid) {
         input.classList.remove("input-error");
-        errorMsg.classList.remove("show");
+        if(errorTag) {
+            errorTag.style.display = "none";
+            errorTag.classList.remove("show");
+        }
     } else {
         input.classList.add("input-error");
-        errorMsg.classList.add("show");
-    }
-    return isValid;
-}
-
-// 1. 로그인 처리 함수
-async function handleLogin() {
-    const userId = document.getElementById("loginId").value;
-    const userPw = document.getElementById("loginPw").value;
-
-    if (!userId || !userPw) {
-        alert("아이디와 비밀번호를 모두 입력해주세요.");
-        return;
-    }
-
-    try {
-        // 백엔드(/auth/login)에 POST 요청 보내기
-        const response = await fetch(`${BASE_URL}/auth/login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                user_id: userId,
-                password: userPw
-            })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            localStorage.setItem("accessToken", data.access_token);
-            localStorage.setItem("userId", data.user_id);     // [추가] 진짜 아이디 저장
-            localStorage.setItem("userName", data.user_name); // 이름은 화면 표시용
-            alert(data.message);
-            window.location.href = "index.html"; 
-        } else {
-            // 실패 시: 백엔드가 보낸 에러 메시지 출력
-            alert(`로그인 실패: ${data.detail}`);
+        if(errorTag) {
+            errorTag.textContent = errorMessage; // 동적 메시지 설정
+            errorTag.style.display = "block";
+            errorTag.classList.add("show");
         }
-    } catch (error) {
-        console.error("Login Error:", error);
-        alert("서버와 통신 중 오류가 발생했습니다.");
     }
 }
 
-// 3. 회원가입 처리 함수 (수정됨)
-async function handleSignup() {
-    // 값을 먼저 다 가져옵니다.
-    const id = document.getElementById("signupId").value;
-    const pw = document.getElementById("signupPw").value;
-    const name = document.getElementById("signupName").value;
-    const phone = document.getElementById("signupPhone").value;
-    const email = document.getElementById("signupEmail").value;
-
-    // ============================================================
-    // [2. 추가됨] 전송 전 최종 검사 (하나라도 틀리면 멈춤)
-    // ============================================================
-    if (!validators.id(id) || !validators.pw(pw) || !validators.name(name) || 
-        !validators.phone(phone) || !validators.email(email)) {
-        alert("입력 정보를 다시 확인해주세요.\n빨간색 경고 문구를 확인하세요.");
-        return; // 여기서 함수를 끝내서 서버로 안 보냅니다!
-    }
-
-    // [기존 코드 유지] 라디오 버튼 값 가져오기
-    const isDeafString = document.querySelector('input[name="isDeaf"]:checked').value;
-    const isDeafBoolean = (isDeafString === 'true');
-
-    const formData = {
-        user_id: id,
-        password: pw,
-        user_name: name,
-        phone_number: phone,
-        email: email,
-        is_deaf: isDeafBoolean 
-    };
-
-    try {
-        const response = await fetch(`${BASE_URL}/auth/signup`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(formData)
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            alert(data.message);
-            window.location.href = "login.html"; 
-        } else {
-            alert(`가입 실패: ${data.detail}`);
-        }
-    } catch (error) {
-        console.error("Signup Error:", error);
-        alert("서버 오류가 발생했습니다.");
-    }
-}
-
-// 4. 버튼 및 입력창 감시 (Event Listener)
+// 3. 메인 로직 실행 (DOM 로드 후)
 document.addEventListener("DOMContentLoaded", () => {
-    const loginBtn = document.getElementById("loginBtn");
-    const signupBtn = document.getElementById("signupBtn");
 
-    if (loginBtn) {
-        loginBtn.addEventListener("click", handleLogin);
-    }
-    if (signupBtn) {
-        signupBtn.addEventListener("click", handleSignup);
-    }
+    // =========================================================================
+    // [로그인 페이지 로직]
+    // =========================================================================
+    const loginForm = document.getElementById("loginForm");
+    
+    if (loginForm) {
+        loginForm.addEventListener("submit", async (e) => {
+            e.preventDefault(); // 새로고침 방지
 
-    // ============================================================
-    // [3. 추가됨] 입력할 때마다 실시간 검사 (회원가입 페이지용)
-    // ============================================================
-    // 아이디 입력 감시
-    const idInput = document.getElementById("signupId");
-    if (idInput) { // 회원가입 페이지에 있을 때만 실행
-        idInput.addEventListener("input", (e) => {
-            toggleError("signupId", "errorId", validators.id(e.target.value));
-        });
-    
-        document.getElementById("signupPw").addEventListener("input", (e) => {
-            toggleError("signupPw", "errorPw", validators.pw(e.target.value));
-        });
-    
-        document.getElementById("signupName").addEventListener("input", (e) => {
-            toggleError("signupName", "errorName", validators.name(e.target.value));
-        });
-    
-        document.getElementById("signupPhone").addEventListener("input", (e) => {
-            // 숫자만 입력받고 하이픈(-) 자동 추가
-            e.target.value = e.target.value
-                .replace(/[^0-9]/g, '')
-                .replace(/^(\d{0,3})(\d{0,4})(\d{0,4})$/g, "$1-$2-$3").replace(/(\-{1,2})$/g, "");
-            toggleError("signupPhone", "errorPhone", validators.phone(e.target.value));
-        });
-    
-        document.getElementById("signupEmail").addEventListener("input", (e) => {
-            toggleError("signupEmail", "errorEmail", validators.email(e.target.value));
-        });
-    }
-    // 도우미 함수: "currentId에서 엔터치면 nextId로 커서를 옮겨라!"
-    function setupEnterNavigation(currentId, nextId, isLast = false) {
-        const currentInput = document.getElementById(currentId);
-        
-        if (currentInput) { // 해당 입력창이 존재할 때만 실행
-            currentInput.addEventListener("keydown", (e) => {
-                if (e.key === "Enter") {
-                    e.preventDefault(); // 엔터 쳤을 때 폼이 맘대로 전송되는 것 방지
-                    
-                    if (isLast) {
-                        // 마지막 칸(이메일)에서는 엔터치면 '회원가입 버튼'을 클릭!
-                        document.getElementById(nextId).click();
-                    } else {
-                        // 그 외에는 다음 칸으로 포커스 이동
-                        const nextInput = document.getElementById(nextId);
-                        if (nextInput) nextInput.focus();
-                    }
+            const userId = document.getElementById("loginId").value;
+            const userPw = document.getElementById("loginPw").value;
+            const errorMsg = document.getElementById("errorMessage");
+
+            // 초기화
+            errorMsg.style.display = "none";
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ user_id: userId, password: userPw })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem("accessToken", data.access_token);
+                    localStorage.setItem("userId", userId);
+                    localStorage.setItem("userName", data.user_name || userId);
+                    window.location.href = "index.html"; // 메인 페이지 이동
+                } else {
+                    const errData = await response.json();
+                    showGlobalError(errorMsg, errData.detail || "로그인 정보를 확인해주세요.");
                 }
-            });
-        }
+            } catch (error) {
+                console.error("Login Error:", error);
+                showGlobalError(errorMsg, "서버에 연결할 수 없습니다.");
+            }
+        });
     }
 
-    // 순서대로 사슬처럼 연결하기 (아이디 -> 비번 -> 이름 -> 전화 -> 이메일 -> 완료버튼)
-    setupEnterNavigation("signupId", "signupPw");       // 아이디 -> 비번
-    setupEnterNavigation("signupPw", "signupName");     // 비번 -> 이름
-    setupEnterNavigation("signupName", "signupPhone");  // 이름 -> 전화번호
-    setupEnterNavigation("signupPhone", "signupEmail"); // 전화번호 -> 이메일
+    // =========================================================================
+    // [회원가입 페이지 로직]
+    // =========================================================================
+    const signupForm = document.getElementById("signupForm");
     
-    // 마지막 이메일에서는 엔터치면 -> 회원가입 완료 버튼(signupBtn)로 포커스 이동!
-    setupEnterNavigation("signupEmail", "signupBtn", false);
-    
-    // (로그인 페이지용) 아이디 -> 비번 -> 로그인 버튼
-    setupEnterNavigation("loginId", "loginPw");
-    setupEnterNavigation("loginPw", "loginBtn", true);
+    if (signupForm) {
+        // [실시간 검사 이벤트 등록]
+        const inputs = [
+            { id: "signupId", validate: validators.id, msg: "영문/숫자 4자 이상 입력하세요." },
+            { id: "signupPw", validate: validators.pw, msg: "비밀번호는 8자 이상이어야 합니다." },
+            { id: "signupName", validate: validators.name, msg: "한글 2자 이상 입력하세요." },
+            { id: "signupPhone", validate: validators.phone, msg: "올바른 전화번호 형식이 아닙니다." },
+            { id: "signupEmail", validate: validators.email, msg: "올바른 이메일 형식이 아닙니다." }
+        ];
+
+        inputs.forEach(({ id, validate, msg }) => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener("input", (e) => {
+                    // 전화번호 자동 하이픈 추가
+                    if (id === "signupPhone") {
+                        e.target.value = e.target.value
+                            .replace(/[^0-9]/g, '')
+                            .replace(/^(\d{0,3})(\d{0,4})(\d{0,4})$/g, "$1-$2-$3").replace(/(\-{1,2})$/g, "");
+                    }
+                    // 유효성 검사 수행
+                    toggleError(id, validate(e.target.value), msg);
+                });
+            }
+        });
+
+        // [회원가입 제출]
+        signupForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            // 최종 유효성 검사 (하나라도 실패하면 중단)
+            for (const { id, validate, msg } of inputs) {
+                const val = document.getElementById(id).value;
+                if (!validate(val)) {
+                    toggleError(id, false, msg);
+                    document.getElementById(id).focus(); // 틀린 곳으로 포커스 이동
+                    return; // 전송 중단
+                }
+            }
+
+            // 라디오 버튼 값 (농인 여부)
+            const isDeafVal = document.querySelector('input[name="is_deaf"]:checked')?.value;
+            const isDeaf = (isDeafVal === "true");
+
+            const formData = {
+                user_id: document.getElementById("signupId").value,
+                password: document.getElementById("signupPw").value,
+                user_name: document.getElementById("signupName").value,
+                phone_number: document.getElementById("signupPhone").value,
+                email: document.getElementById("signupEmail").value,
+                is_deaf: isDeaf
+            };
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/signup`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(formData)
+                });
+
+                if (response.ok) {
+                    alert("회원가입 성공! 로그인해주세요.");
+                    window.location.href = "login.html";
+                } else {
+                    const errData = await response.json();
+                    alert(`가입 실패: ${errData.detail}`);
+                }
+            } catch (error) {
+                console.error("Signup Error:", error);
+                alert("서버 오류가 발생했습니다.");
+            }
+        });
+    }
 });
+
+// [유틸리티] 전역 에러 메시지 표시 (로그인용)
+function showGlobalError(element, message) {
+    if (element) {
+        element.textContent = message;
+        element.style.display = "block";
+        element.classList.add("show");
+    } else {
+        alert(message);
+    }
+}

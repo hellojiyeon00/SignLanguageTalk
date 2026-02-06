@@ -2,10 +2,11 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>수어톡 채팅</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>수어톡 - 채팅</title>
+    
     <link rel="stylesheet" href="assets/chat.css">
-</head>
-<body>
+
     <script>
         const token = localStorage.getItem("accessToken");
         if (!token) {
@@ -13,36 +14,36 @@
             window.location.href = "login.html";
         }
     </script>
+</head>
+<body>
 
     <div class="main-container">
         <div class="sidebar">
             <div class="user-profile">
-                <h3 id="myProfileName">내 이름</h3>
+                <h3 id="myProfileName" style="margin: 0; font-size: 1.1rem;">내 이름</h3>
                 <button onclick="logout()" class="btn-logout">로그아웃</button>
             </div>
 
-            <div class="search-area" style="padding: 10px; border-bottom: 1px solid #ddd;">
-                <div style="display: flex; gap: 5px; margin-bottom: 5px;">
-                    <input type="text" id="searchName" placeholder="이름 검색" style="flex: 1; padding: 5px;">
-                    <input type="text" id="searchId" placeholder="ID 검색" style="flex: 1; padding: 5px;">
+            <div class="sidebar-search">
+                <div class="search-inputs">
+                    <input type="text" id="searchName" placeholder="이름 검색">
+                    <input type="text" id="searchId" placeholder="ID 검색">
                 </div>
-                <button onclick="searchUser()" style="width: 100%; padding: 5px; background-color: #f0f0f0; border: 1px solid #ccc; cursor: pointer;">
-                    검색
-                </button>
+                <button onclick="searchUser()" class="btn-search">사용자 검색</button>
             </div>
 
-            <div id="searchResultArea" style="display:none; background:#f9f9f9; padding:10px; border-bottom:1px solid #ddd;">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <h5 style="margin:0;">검색 결과</h5>
-                    <button onclick="closeSearch()" style="font-size:12px;">닫기</button>
+            <div id="searchResultArea" style="display:none; border-bottom: 1px solid var(--border-color); padding: 10px; background-color: #fff9db;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
+                    <span style="font-weight:bold; font-size: 0.9rem;">검색 결과</span>
+                    <button onclick="closeSearch()" style="border:none; background:none; cursor:pointer; font-size:0.8rem; color:#888;">✕ 닫기</button>
                 </div>
-                <ul id="searchResultList" style="list-style:none; padding:0; margin-top:10px;"></ul>
+                <div id="searchResultList"></div>
             </div>
 
             <div class="friend-list-area">
-                <h4>내 친구 목록</h4>
-                <ul id="friendList">
-                    </ul>
+                <div style="padding: 0 5px 10px 5px; font-size: 0.9rem; color: #666; font-weight: bold;">내 친구 목록</div>
+                <div id="friendList">
+                    </div>
             </div>
         </div>
 
@@ -50,10 +51,12 @@
             <div class="chat-header" id="chatHeader">
                 <span id="chatTitle">대화 상대를 선택해주세요</span>
             </div>
+
             <div class="chat-messages" id="messages">
                 </div>
+
             <div class="chat-input">
-                <input type="text" id="messageInput" placeholder="메시지를 입력하세요...">
+                <input type="text" id="messageInput" placeholder="메시지를 입력하세요..." onkeypress="if(event.keyCode==13) sendMessage()">
                 <button onclick="sendMessage()">전송</button>
             </div>
         </div>
