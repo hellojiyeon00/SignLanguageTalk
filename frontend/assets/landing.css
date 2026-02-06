@@ -56,7 +56,8 @@ header {
 }
 
 /* 공통 버튼 스타일 */
-.auth-buttons a {
+.auth-buttons a,
+.auth-buttons button {
     text-decoration: none;
     padding: 8px 18px; /* 좌우 여백 살짝 늘림 */
     border-radius: 5px;
@@ -90,6 +91,20 @@ header {
     border-color: var(--primary-hover);
     transform: translateY(-1px); /* 살짝 떠오르는 효과 */
     box-shadow: 0 2px 5px rgba(0,123,255,0.3); /* 파란 그림자 */
+}
+
+/* 3. 로그아웃 버튼 (회색 Outline 스타일) */
+.btn-logout {
+    color: var(--text-sub);         /* 글자색: 회색 */
+    border: 1px solid var(--border-color); /* 테두리: 연한 회색 */
+    background-color: var(--white); /* 배경: 흰색 */
+    cursor: pointer;                /* 마우스 올리면 손가락 모양 */
+}
+
+.btn-logout:hover {
+    background-color: #f1f3f5;      /* 호버 시 배경 약간 어둡게 */
+    border-color: #999;            /* 테두리 진하게 */
+    color: #333;                   /* 글자 진하게 */
 }
 
 /* --- 메인 소개 구역 (Hero Section) --- */

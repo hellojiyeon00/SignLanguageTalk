@@ -4,6 +4,7 @@
 # 1. 라이브러리 임포트
 # ==============================================================================
 from pydantic import BaseModel, EmailStr, Field
+from typing import Optional
 
 # Pydantic 라이브러리 설명:
 # - BaseModel: 모든 데이터 모델(설계도)의 부모 클래스입니다. 이를 상속받으면 데이터 검증 기능이 자동으로 생깁니다.
@@ -22,17 +23,12 @@ class UserSignup(BaseModel):
     """
     # ... : 필드가 '필수(Required)'라는 뜻입니다. (값이 없으면 에러 발생)
     user_id: str = Field(..., description="사용자 아이디") 
-    
     # min_length=8: 비밀번호가 8글자 미만이면 서버가 자동으로 거절합니다.
     password: str = Field(..., min_length=8, description="비밀번호 (보안을 위해 8자 이상 필수)")
-    
     user_name: str = Field(..., description="사용자 실명")
-    
     phone_number: str = Field(..., description="휴대폰 번호 (예: 010-1234-5678)") 
-    
     # EmailStr: "abc" 같은 엉뚱한 문자열이 들어오면 에러를 냅니다. "abc@gmail.com" 처럼 생겨야 통과됩니다.
     email: EmailStr = Field(..., description="이메일 주소")
-    
     # 기본값(default)을 True로 설정했습니다. 값을 안 보내면 자동으로 True(농인)로 처리됩니다.
     is_deaf: bool = Field(True, description="농인 여부 (True: 농인, False: 청인)")
 
@@ -43,6 +39,14 @@ class UserLogin(BaseModel):
     """
     user_id: str
     password: str
+
+class UserUpdate(BaseModel):
+    user_id: str
+    # 수정할 수도 있고 안 할 수도 있으므로 Optional 처리
+    user_name: Optional[str] = None
+    phone_number: Optional[str] = None
+    password: Optional[str] = None
+    
 
 class RoomCreateRequest(BaseModel):
     """

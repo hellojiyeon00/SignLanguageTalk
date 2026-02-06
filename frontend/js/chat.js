@@ -355,8 +355,116 @@ function displayMessage(senderId, senderName, msg, time) {
  * ============================================================================
  */
 function logout() {
-    if(confirm("로그아웃 하시겠습니까?")) {
-        localStorage.clear();
-        window.location.href = "index.html";
+    localStorage.clear();
+    window.location.href = "index.html";
+}
+
+// 1. [설정창 열기] 내 정보 불러오기 (GET /auth/me)
+function openSettings() {
+    const modal = document.getElementById("settingsModal");
+    
+    // 화면 초기화: 메뉴는 보이고, 수정창은 숨김
+    document.getElementById("settingsMenu").style.display = "block";
+    document.getElementById("settingsEditProfile").style.display = "none";
+    
+    modal.style.display = "flex"; 
+}
+
+// 2. [메뉴판 보여주기] (뒤로가기 눌렀을 때)
+function showSettingsMenu() {
+    document.getElementById("settingsMenu").style.display = "block";
+    document.getElementById("settingsEditProfile").style.display = "none";
+}
+
+// 3. [회원정보 수정 화면으로 이동] 이때 서버에서 정보를 가져옵니다!
+async function goToProfileEdit() {
+    try {
+        const res = await fetch(`${BASE_URL}/auth/me?user_id=${myId}`);
+        if (!res.ok) throw new Error("정보 로딩 실패");
+        
+        const data = await res.json();
+        
+        document.getElementById("editName").value = data.user_name;
+        document.getElementById("editPhone").value = data.phone_number;
+        document.getElementById("editPw").value = ""; 
+
+        // 메뉴 숨기고 수정창 보여주기
+        document.getElementById("settingsMenu").style.display = "none";
+        document.getElementById("settingsEditProfile").style.display = "block";
+        
+    } catch (e) {
+        alert("정보를 불러올 수 없습니다.");
+        console.error(e);
+    }
+}
+
+// 4. [설정창 닫기]
+function closeSettings() {
+    document.getElementById("settingsModal").style.display = "none";
+}
+
+// 3. [회원정보 수정] (PUT /auth/me)
+async function updateMember() {
+    const newName = document.getElementById("editName").value;
+    const newPhone = document.getElementById("editPhone").value;
+    const newPw = document.getElementById("editPw").value; 
+
+    // 백엔드 schemas.py의 UserUpdate 양식에 맞춰 데이터 준비
+    const updateData = {
+        user_id: myId,
+        user_name: newName || null,
+        phone_number: newPhone || null,
+        password: newPw || null // 비어있으면 null로 보냄 (비밀번호 변경 안 함)
+    };
+
+    try {
+        const res = await fetch(`${BASE_URL}/auth/me`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updateData)
+        });
+        
+        const result = await res.json();
+        
+        if (res.ok) {
+            alert(result.message);
+            // 이름이 바뀌었을 수 있으니 화면과 저장소 업데이트
+            if (newName) {
+                localStorage.setItem("userName", newName);
+                document.getElementById("myProfileName").textContent = newName + "님";
+            }
+            closeSettings();
+        } else {
+            alert("수정 실패: " + result.detail);
+        }
+    } catch (e) {
+        console.error(e);
+        alert("서버 오류가 발생했습니다.");
+    }
+}
+
+// 4. [회원 탈퇴] (DELETE /auth/me)
+async function deleteMember() {
+    // 1. 탈퇴 의사 확인 (여기는 물어봐야 함)
+    if (!confirm("정말로 탈퇴하시겠습니까?\n탈퇴 후에는 복구할 수 없습니다.")) return;
+    
+    try {
+        const res = await fetch(`${BASE_URL}/auth/me?user_id=${myId}`, {
+            method: "DELETE"
+        });
+        
+        if (res.ok) {
+            // [핵심 수정] 질문(confirm)하지 않고, 통보(alert) 후 강제 추방합니다.
+            alert("탈퇴가 완료되었습니다. 그동안 이용해 주셔서 감사합니다.");
+            
+            // 확인 버튼을 누르는 순간 즉시 로그아웃 실행
+            logout(); 
+        } else {
+            const err = await res.json();
+            alert("탈퇴 실패: " + err.detail);
+        }
+    } catch (e) {
+        console.error(e);
+        alert("서버 오류가 발생했습니다.");
     }
 }

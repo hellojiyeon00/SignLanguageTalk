@@ -11,11 +11,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // 3. 토큰이 있다면? (이미 로그인 된 상태)
     if (token) {
         // 3-1. 상단 헤더 버튼 변경
-        // '로그인/회원가입' -> '채팅방 입장/로그아웃'
         if (authBox) {
             authBox.innerHTML = `
                 <a href="chat.html" class="btn-signup">채팅방 입장</a>
-                <button id="headerLogoutBtn" class="btn-login" style="cursor:pointer;">로그아웃</button>
+                <button id="headerLogoutBtn" class="btn-logout">로그아웃</button>
             `;
             
             // 동적으로 생성된 로그아웃 버튼에 이벤트 연결
@@ -23,7 +22,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         // 3-2. 중앙 히어로 버튼 변경
-        // '지금 시작하기' -> '채팅방 입장하기'
         if (startBtn) {
             startBtn.href = "chat.html";
             startBtn.textContent = "채팅방 입장하기";
@@ -37,14 +35,12 @@ document.addEventListener("DOMContentLoaded", () => {
  * ============================================================================
  */
 function handleLogout() {
-    if (confirm("로그아웃 하시겠습니까?")) {
-        // 1. 저장된 모든 정보 삭제 (토큰, 아이디, 이름 등)
-        localStorage.clear();
-        
-        // 2. 사용자에게 알림
-        alert("로그아웃 되었습니다.");
-        
-        // 3. 페이지 새로고침 (로그인 전 상태로 복구)
-        window.location.reload();
-    }
+    // [수정 2] 묻지도 따지지도 않고 즉시 로그아웃 (confirm 삭제)
+    
+    // 1. 저장된 모든 정보 삭제
+    localStorage.clear();
+    
+    // 2. 페이지 새로고침 (로그인 전 상태로 복구)
+    // alert("로그아웃 되었습니다."); // 알림도 굳이 필요 없다면 주석 처리하거나 삭제하세요.
+    window.location.reload();
 }

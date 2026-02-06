@@ -10,7 +10,7 @@ from jose import jwt  # JWT 토큰 생성 및 복호화를 위한 라이브러�
 
 # 우리가 만든 모듈들 가져오기
 from app.core.database import get_db  # DB 세션을 생성하는 함수
-from app.api.schemas import UserSignup, UserLogin, MessageResponse, TokenResponse # 데이터 검증용 설계도(Schema)
+from app.api.schemas import UserSignup, UserLogin, UserUpdate, MessageResponse, TokenResponse # 데이터 검증용 설계도(Schema)
 from app.core.config import settings  # 환경 설정(비밀키, 알고리즘 등)
 from app.services.auth_service import AuthService  # 실제 비즈니스 로직(요리사)을 담당하는 서비스 클래스
 
@@ -105,3 +105,57 @@ def login(login_data: UserLogin, db: Session = Depends(get_db)):
         "user_id": user[0],           # 사용자 아이디 (member_id)
         "user_name": user[1]          # 사용자 이름 (full_name) - 화면 표시용
     }
+    
+# ==============================================================================
+# 5. 내 정보 조회 API (GET /me)
+# ==============================================================================
+@router.get("/me")
+def get_my_info(user_id: str, db: Session = Depends(get_db)):
+    """
+    [설정] 내 프로필 정보를 불러옵니다.
+    """
+    # 서비스에게 "정보 가져와"라고 시킴
+    user = AuthService.get_user_info(db, user_id)
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="사용자 정보를 찾을 수 없습니다.")
+        
+    return {
+        "user_id": user[0],
+        "user_name": user[1],
+        "phone_number": user[2],
+        "email": user[3]
+    }
+
+# ==============================================================================
+# 6. 회원 정보 수정 API (PUT /me)
+# ==============================================================================
+@router.put("/me", response_model=MessageResponse)
+def update_member(data: UserUpdate, db: Session = Depends(get_db)):
+    """
+    [설정] 이름, 전화번호, 비밀번호를 수정합니다.
+    """
+    try:
+        # 서비스에게 "수정해줘"라고 시킴 (비밀번호 처리 로직은 서비스가 알아서 함)
+        AuthService.update_user(db, data)
+        return {"message": "회원정보가 수정되었습니다."}
+        
+    except Exception as e:
+        # 서비스에서 에러가 나서 넘어왔다면 여기서 처리
+        raise HTTPException(status_code=500, detail=f"수정 실패: {str(e)}")
+
+# ==============================================================================
+# 7. 회원 탈퇴 API (DELETE /me)
+# ==============================================================================
+@router.delete("/me", response_model=MessageResponse)
+def delete_member(user_id: str, db: Session = Depends(get_db)):
+    """
+    [설정] 회원을 탈퇴 처리합니다 (Soft Delete).
+    """
+    try:
+        # 서비스에게 "삭제 처리해줘"라고 시킴
+        AuthService.delete_user(db, user_id)
+        return {"message": "탈퇴 처리가 완료되었습니다."}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"탈퇴 실패: {str(e)}")

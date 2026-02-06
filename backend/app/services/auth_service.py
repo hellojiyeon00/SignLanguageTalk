@@ -8,7 +8,7 @@ from sqlalchemy import text # SQL문을 문자열로 작성하기 위해 필요�
 from fastapi import HTTPException
 
 # 데이터 검증을 위해 설계도(Schema)를 가져옵니다.
-from app.api.schemas import UserSignup, UserLogin
+from app.api.schemas import UserSignup, UserLogin, UserUpdate
 
 class AuthService:
     """
@@ -19,6 +19,10 @@ class AuthService:
 
     # @staticmethod: 클래스(AuthService)를 따로 생성(new)하지 않고도 바로 쓸 수 있게 해주는 장식입니다.
     # 사용법: AuthService.create_user(...)
+    
+    # ---------------------------------------------------------------------------
+    # [1] 회원가입 처리
+    # ---------------------------------------------------------------------------
     @staticmethod
     def create_user(db: Session, user_data: UserSignup):
         """
@@ -87,7 +91,10 @@ class AuthService:
             
             # 사용자에게는 "서버 에러(500)"라고 알려줍니다.
             raise HTTPException(status_code=500, detail=f"가입 실패: {str(e)}")
-
+        
+    # ---------------------------------------------------------------------------
+    # [2] 로그인 처리
+    # ---------------------------------------------------------------------------
     @staticmethod
     def authenticate_user(db: Session, login_data: UserLogin):
         """
@@ -107,6 +114,7 @@ class AuthService:
             FROM multicampus_schema.member
             WHERE member_id = :id 
               AND passwd = crypt(:pw, passwd)
+              AND delete_date IS NULL
         """)
         
         # 쿼리 실행
@@ -118,3 +126,94 @@ class AuthService:
         # user 변수에는 (member_id, full_name) 튜플이 들어있거나,
         # 일치하는 사람이 없으면 None이 들어있습니다.
         return user
+    
+    # ---------------------------------------------------------------------------
+    # [3] 사용자 정보 조회
+    # ---------------------------------------------------------------------------
+    @staticmethod
+    def get_user_info(db: Session, user_id: str):
+        """
+        설정 화면에 띄워줄 사용자 정보를 DB에서 가져옵니다.
+        """
+        sql = text("""
+            SELECT member_id, full_name, mobile_phone, e_mail_address 
+            FROM multicampus_schema.member 
+            WHERE member_id = :id
+        """)
+        user = db.execute(sql, {"id": user_id}).fetchone()
+        
+        return user # 없으면 None 반환
+
+    # ---------------------------------------------------------------------------
+    # [4] 사용자 정보 수정
+    # ---------------------------------------------------------------------------
+    @staticmethod
+    def update_user(db: Session, update_data: UserUpdate):
+        """
+        사용자가 입력한 정보로 DB를 업데이트합니다.
+        비밀번호 변경 요청 여부에 따라 SQL이 달라집니다.
+        """
+        try:
+            # 1) 비밀번호도 바꾸는 경우
+            if update_data.password:
+                update_sql = text("""
+                    UPDATE multicampus_schema.member
+                    SET full_name = :name,
+                        mobile_phone = :phone,
+                        passwd = crypt(:pw, gen_salt('bf')), -- 새 비밀번호 암호화
+                        update_date = CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Seoul',
+                        update_user = :id
+                    WHERE member_id = :id
+                """)
+                params = {
+                    "name": update_data.user_name, 
+                    "phone": update_data.phone_number, 
+                    "pw": update_data.password, 
+                    "id": update_data.user_id
+                }
+            
+            # 2) 정보만 바꾸는 경우 (비밀번호 제외)
+            else:
+                update_sql = text("""
+                    UPDATE multicampus_schema.member
+                    SET full_name = :name,
+                        mobile_phone = :phone,
+                        update_date = CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Seoul',
+                        update_user = :id
+                    WHERE member_id = :id
+                """)
+                params = {
+                    "name": update_data.user_name, 
+                    "phone": update_data.phone_number, 
+                    "id": update_data.user_id
+                }
+
+            db.execute(update_sql, params)
+            db.commit()
+            
+        except Exception as e:
+            db.rollback()
+            # 에러 메시지를 호출한 쪽(Router)으로 던져줍니다.
+            raise e
+        
+    # ---------------------------------------------------------------------------
+    # [5] 회원 탈퇴 처리
+    # ---------------------------------------------------------------------------
+    @staticmethod
+    def delete_user(db: Session, user_id: str):
+        """
+        회원을 완전히 삭제하지 않고, 탈퇴 날짜(delete_date)를 기록하여 비활성화합니다.
+        """
+        delete_sql = text("""
+            UPDATE multicampus_schema.member
+            SET delete_date = CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Seoul',
+                delete_user = :id
+            WHERE member_id = :id
+        """)
+        
+        try:
+            db.execute(delete_sql, {"id": user_id})
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            raise e
