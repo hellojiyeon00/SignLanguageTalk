@@ -14,3 +14,20 @@ class UserSignup(BaseModel):
 class UserLogin(BaseModel):
     user_id: str
     password: str
+    
+# [응답용] 일반적인 메시지 반환
+class MessageResponse(BaseModel):
+    message: str
+
+# [응답용] 로그인 성공 시 반환할 데이터
+class TokenResponse(BaseModel):
+    message: str
+    access_token: str
+    token_type: str
+    user_id: str
+    user_name: str
+
+# [응답용] 채팅방 정보
+class RoomResponse(BaseModel):
+    room_id: int
+    message: str

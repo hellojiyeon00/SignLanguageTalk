@@ -53,13 +53,6 @@ async def handle_send_message(sid, data):
     msg = data.get("message")
     
     now = datetime.now().strftime("%H:%M")
-
-    # if room_id and sender_id and msg:
-    #     db = SessionLocal()
-    #     try:
-    #         # 1. 아이디(문자)로 회원 번호(숫자) 찾기
-    #         get_no = text("SELECT member_no FROM multicampus_schema.member WHERE member_id = :id")
-    #         member_no = db.execute(get_no, {"id": sender_id}).scalar()
     
     if room_id and sender_id and msg:
         db = SessionLocal()
@@ -89,13 +82,6 @@ async def handle_send_message(sid, data):
             db.rollback()
         finally:
             db.close()
-
-        # 3. 상대방에게 실시간 전달
-        # await sio.emit("receive_message", {
-        #     "sender": sender_id, 
-        #     "message": msg,
-        #     "time": now  
-        # }, room=room_name)
         
         await sio.emit("receive_message", {
                 "sender": sender_id,
