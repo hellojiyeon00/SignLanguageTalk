@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from jose import jwt
 
 from app.core.database import get_db
-from app.api.schemas import UserSignup, UserLogin
+from app.api.schemas import UserSignup, UserLogin, MessageResponse, TokenResponse
 from app.core.config import settings
 from app.services.auth_service import AuthService  # 서비스 호출
 
@@ -19,14 +19,14 @@ def create_access_token(data: dict):
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 # --- [회원가입] ---
-@router.post("/signup", status_code=status.HTTP_201_CREATED)
+@router.post("/signup", status_code=status.HTTP_201_CREATED, response_model=MessageResponse)
 def signup(user_data: UserSignup, db: Session = Depends(get_db)):
     # 모든 로직(암호화 포함)은 서비스와 DB가 처리합니다.
     AuthService.create_user(db, user_data)
     return {"message": "가입을 환영합니다!"}
 
 # --- [로그인] ---
-@router.post("/login")
+@router.post("/login", response_model=TokenResponse)
 def login(login_data: UserLogin, db: Session = Depends(get_db)):
     # 서비스에게 "이 아이디랑 비번 맞는 사람 있어?" 라고 물어봅니다.
     user = AuthService.authenticate_user(db, login_data)

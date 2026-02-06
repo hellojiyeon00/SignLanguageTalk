@@ -31,3 +31,7 @@ class TokenResponse(BaseModel):
 class RoomResponse(BaseModel):
     room_id: int
     message: str
+    
+class RoomCreateRequest(BaseModel):
+    my_id: str
+    target_id: str
