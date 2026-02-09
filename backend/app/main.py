@@ -1,17 +1,19 @@
-# app/main.py
+"""FastAPI 메인 애플리케이션
+
+Socket.IO를 지원하는 채팅 서버 설정
+"""
 import socketio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.core.database import SessionLocal
-from sqlalchemy import text
 from app.api.auth import router as auth_router
 from app.api.chat import router as chat_router
+from app.api.sockets import sio
 
-sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins="*")
-app = FastAPI()
-sio_app = socketio.ASGIApp(sio, app)
+# FastAPI 앱 생성
+app = FastAPI(title="Chat API", version="1.0.0")
 
+# CORS 설정 - 개발 환경용 (프로덕션에서는 특정 origin만 허용)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -19,65 +21,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth_router, prefix="/auth")
-app.include_router(chat_router, prefix="/chat")
+# API 라우터 등록
+app.include_router(auth_router, prefix="/auth", tags=["인증"])
+app.include_router(chat_router, prefix="/chat", tags=["채팅"])
 
-@sio.event
-async def connect(sid, environ):
-    print(f"✅ 접속: {sid}")
+# Socket.IO 통합 - FastAPI 앱을 Socket.IO ASGI 앱으로 래핑
+app = socketio.ASGIApp(sio, app)
 
-@sio.on("join_room")
-async def handle_join_room(sid, data):
-    room = data.get("room")
-    username = data.get("username")
-    print(f"🚪 입장 시도: {username} -> {room}") # 서버 터미널에 찍힘
-    
-    await sio.enter_room(sid, room)
-    print(f"🚪 {username}님이 {room} 방에 입장했습니다.")
-    
-@sio.on("leave_room")
-async def handle_leave_room(sid, data):
-    room = data.get("room")
-    username = data.get("username")
-    if room:
-        await sio.leave_room(sid, room) # 서버에서 방 퇴장 처리
-        print(f"🚪 {username}님이 {room} 방에서 나갔습니다.")
-
-@sio.on("send_message")
-async def handle_send_message(sid, data):
-    
-    room_id = data.get("room_id") # 숫자로 된 방 ID
-    room_name = data.get("room")   # 소켓 통신용 이름 (ID_ID)
-    sender_id = data.get("username") # 보낸 사람의 아이디 (문자)
-    msg = data.get("message")
-
-    if room_id and sender_id and msg:
-        db = SessionLocal()
-        try:
-            # 1. 아이디(문자)로 회원 번호(숫자) 찾기
-            get_no = text("SELECT member_no FROM multicampus_schema.member WHERE member_id = :id")
-            member_no = db.execute(get_no, {"id": sender_id}).scalar()
-
-            # 2.  정의서 구조대로 talk 테이블에 저장
-            insert_talk = text("""
-                INSERT INTO multicampus_schema.talk (
-                    talk_room_id, member_no, talk_date, message, create_user
-                ) VALUES (
-                    :r_id, :m_no, CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Seoul', :msg, :c_user
-                )
-            """)
-            db.execute(insert_talk, {
-                "r_id": room_id, 
-                "m_no": member_no, 
-                "msg": msg, 
-                "c_user": sender_id
-            })
-            db.commit() # 저장 완료!
-        except Exception as e:
-            print(f"❌ 저장 실패: {e}")
-            db.rollback()
-        finally:
-            db.close()
-
-        # 3. 상대방에게 실시간 전달
-        await sio.emit("receive_message", {"sender": sender_id, "message": msg}, room=room_name)

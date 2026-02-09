@@ -1,20 +1,40 @@
+"""애플리케이션 설정 관리
+
+.env 파일로부터 환경 변수를 로드하고 검증
+"""
 import os
-from dotenv import load_dotenv
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-load_dotenv()
 
-class Settings:
-    # DB 접속 정보 조립
-    DB_USER = os.getenv("DB_USER")
-    DB_PASSWORD = os.getenv("DB_PASSWORD")
-    DB_HOST = os.getenv("DB_HOST")
-    DB_PORT = os.getenv("DB_PORT")
-    DB_NAME = os.getenv("DB_NAME")
+class Settings(BaseSettings):
+    """애플리케이션 설정 클래스"""
     
-    DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    # 데이터베이스 설정
+    DB_USER: str
+    DB_PASSWORD: str
+    DB_HOST: str
+    DB_PORT: str
+    DB_NAME: str
     
-    # 보안 키
-    SECRET_KEY = os.getenv("SECRET_KEY")
-    ALGORITHM = os.getenv("ALGORITHM", "HS256")
+    # JWT 설정
+    SECRET_KEY: str
+    ALGORITHM: str = "HS256"
+
+    @property
+    def DATABASE_URL(self) -> str:
+        """SQLAlchemy 데이터베이스 연결 URL 생성"""
+        return f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+
+    # .env 파일 경로 계산 (backend/app/core -> project root)
+    _current_file = os.path.abspath(__file__)
+    _project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(_current_file))))
+    _env_file_path = os.path.join(_project_root, ".env")
+
+    model_config = SettingsConfigDict(
+        env_file=_env_file_path,
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
+
 
 settings = Settings()
