@@ -117,7 +117,7 @@
 ## 6. 📁 프로젝트 구조
 
 ```
-project-root/
+SignLanguageTalk/
 │
 ├── backend/ (FastAPI)
 │   ├── app/
@@ -129,7 +129,11 @@ project-root/
 │
 ├── frontend/ (HTML/JS)
 │   ├── assets/           # CSS, Images
-│   └── js/               # Frontend logic
+│   ├── js/               # Frontend logic
+│   ├── chat.html
+│   ├── index.html
+│   ├── login.html
+│   └── signup.html
 │
 ├── data_pipeline/ (Spark / Airflow)
 │   ├── dags/             # Airflow DAGs
