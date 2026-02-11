@@ -39,11 +39,18 @@ async def transfer_sign2gloss(data):
             print("인식된 단어가 없습니다.")
         msg = await transfer_gloss2text(user_gloss_buffers[sender_id])
         print(f"반환된 문장: {msg}")
+
+        # 해당 유저의 저장소 초기화
+        user_landmarks_buffers[sender_id] = []
+        user_gloss_buffers[sender_id] = []
+
         return msg
     
-    # 유저별 랜드마크 저장
+    # 유저 저장소 초기화
     if sender_id not in user_landmarks_buffers:
         user_landmarks_buffers[sender_id] = []
+    if sender_id not in user_gloss_buffers:
+        user_gloss_buffers[sender_id] = []
 
     user_landmarks_buffers[sender_id].append(landmarks)
     predicted_gloss = None
@@ -56,6 +63,4 @@ async def transfer_sign2gloss(data):
         print(predicted_gloss)
     
     if predicted_gloss:
-        if sender_id not in user_gloss_buffers:
-            user_gloss_buffers[sender_id] = []
         user_gloss_buffers[sender_id].append(predicted_gloss)

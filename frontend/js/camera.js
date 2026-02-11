@@ -136,6 +136,7 @@ stopBtn.addEventListener("click", () => {
 
 function closeCamera() {
     isCapturing = false;
+    startBtn.disabled = false;
 
     if (stream) {
         stream.getTracks().forEach(t => t.stop());
