@@ -10,6 +10,8 @@ from fastapi.concurrency import run_in_threadpool
 
 from app.core.database import SessionLocal
 
+from app.services.sign_service import transfer_sign2gloss
+
 # 로거 설정
 logger = logging.getLogger("socket")
 logging.basicConfig(level=logging.INFO)
@@ -102,6 +104,46 @@ async def handle_send_message(sid, data):
     room_name = data.get("room")
     sender_id = data.get("username")
     msg = data.get("message")
+
+    # 한국 시간 (KST = UTC+9)
+    KST = timezone(timedelta(hours=9))
+    now_kst = datetime.now(KST).strftime("%H:%M")
+
+    if room_id and sender_id and msg:
+        try:
+            # DB 저장 (별도 스레드)
+            sender_name = await run_in_threadpool(save_message_sync, room_id, sender_id, msg)
+            
+            # 실시간 전송
+            if sender_name:
+                payload = {
+                    "sender": sender_id,
+                    "sender_name": sender_name,
+                    "message": msg,
+                    "time": now_kst
+                }
+                
+                await sio.emit("receive_message", payload, room=room_name)
+                
+        except Exception as e:
+            logger.error(f"❌ [소켓 에러] 메시지 처리 실패: {e}")
+
+# 랜드마크 수신
+@sio.on("send_landmarks")
+async def handle_send_landmarks(sid, data):
+    # 1. 서비스 호출 (AI 모델 예측 및 단어 추출)
+    # data 안에는 username, room, message(좌표) 등이 들어있음
+    msg = await transfer_sign2gloss(data)
+
+    """메시지 전송 처리
+    
+    1. DB에 메시지 저장
+    2. 같은 방에 있는 모든 클라이언트에게 브로드캐스트
+    """
+    room_id = data.get("room_id")
+    room_name = data.get("room")
+    sender_id = data.get("username")
+    msg = msg
 
     # 한국 시간 (KST = UTC+9)
     KST = timezone(timedelta(hours=9))
