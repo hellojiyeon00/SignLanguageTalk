@@ -21,6 +21,7 @@ const HAND_LANDMARKS_IDX = Array.from({ length: 21 }, (_, i) => i);
 
 // ===== MediaPipe 초기화 =====
 function initHolistic() {
+    console.log("📷 [MediaPipe] Initialize MediaPipe")
     holistic = new Holistic({
         locateFile: file =>
             `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`
@@ -76,9 +77,15 @@ openBtn.addEventListener("click", async () => {
         alert("대화 상대를 먼저 선택해주세요.");
         return;
     }
+
+    console.log("📷 [Camera] Open Camera")
     
     modal.style.display = "block";
     overlay.style.display = "block";
+
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+    statusText.textContent = "카메라 준비 중...";
 
     try {
         stream = await navigator.mediaDevices.getUserMedia({
@@ -102,6 +109,8 @@ openBtn.addEventListener("click", async () => {
 });
 
 startBtn.addEventListener("click", () => {
+    console.log("📷 [Camera] Start Send Landmarks")
+
     isCapturing = true;
     frameCount = 0;
 
@@ -117,7 +126,11 @@ startBtn.addEventListener("click", () => {
     loop();
 });
 
+// TODO: 정지 버튼 클릭 시 로딩 바가 돌아가고 문자을 반환받으면 번역 완료 문구 출력 후 카메라 화면 자동 종료
+// 종료 후 (입력 창에 바로 텍스트 출력 or 정지 버튼이 전송 버튼으로 변환)
 stopBtn.addEventListener("click", () => {
+    console.log("📷 [Camera] Stop Send Landmarks")
+
     isCapturing = false;
     startBtn.disabled = true;
     stopBtn.disabled = true;
@@ -134,9 +147,11 @@ stopBtn.addEventListener("click", () => {
     });
 });
 
+// TODO: 정지 버튼을 누르지 않고 카메라 화면을 닫으면 '전송하지 않고 닫으시겠습니까?' 팝업 출력
 function closeCamera() {
+    console.log("📷 [Camera] Close Camera")
+    
     isCapturing = false;
-    startBtn.disabled = false;
 
     if (stream) {
         stream.getTracks().forEach(t => t.stop());

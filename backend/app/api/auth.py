@@ -31,7 +31,8 @@ def signup(user_data: UserSignup, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(login_data: UserLogin, db: Session = Depends(get_db)):\n    """로그인"""
+def login(login_data: UserLogin, db: Session = Depends(get_db)):
+    """로그인"""
     user = AuthService.authenticate_user(db, login_data)
     
     if not user:
