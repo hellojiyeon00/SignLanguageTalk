@@ -8,6 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.auth import router as auth_router
 from app.api.chat import router as chat_router
+# 추가(소영)
+from app.api.model_bridge import router as model_router
 from app.api.sockets import sio
 
 # FastAPI 앱 생성
@@ -24,6 +26,8 @@ app.add_middleware(
 # API 라우터 등록
 app.include_router(auth_router, prefix="/auth", tags=["인증"])
 app.include_router(chat_router, prefix="/chat", tags=["채팅"])
+# 모델 라우터 등록 (소영)
+app.include_router(model_router, prefix="/model", tags=["모델"])
 
 # Socket.IO 통합 - FastAPI 앱을 Socket.IO ASGI 앱으로 래핑
 app = socketio.ASGIApp(sio, app)

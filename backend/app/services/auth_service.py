@@ -71,7 +71,7 @@ class AuthService:
             tuple: (member_id, full_name) 또는 None
         """
         login_sql = text("""
-            SELECT member_id, full_name 
+            SELECT member_id, full_name, deaf_muteness_section_code
             FROM multicampus_schema.member
             WHERE member_id = :id 
               AND passwd = crypt(:pw, passwd)

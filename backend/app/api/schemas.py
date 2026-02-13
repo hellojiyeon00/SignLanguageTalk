@@ -50,6 +50,8 @@ class TokenResponse(BaseModel):
     token_type: str
     user_id: str
     user_name: str
+    # 추가
+    is_deaf: bool
 
 
 class RoomResponse(BaseModel):

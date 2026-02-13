@@ -6,6 +6,8 @@
 const BASE_URL = "http://localhost:8000";
 const myId = localStorage.getItem("userId");
 const myName = localStorage.getItem("userName");
+// 추가
+const isDeaf = (localStorage.getItem("is_deaf") === "true");
 
 let currentRoomId = null;    // DB 방 번호
 let currentRoomName = null;  // 소켓 방 이름 (user1_user2)
@@ -51,15 +53,39 @@ document.addEventListener("DOMContentLoaded", () => {
 // ======== 소켓 이벤트 ========
 socket.on("receive_message", (data) => {
     console.log("📥 [Socket] 메시지 수신:", data);
-    
-    if (data.sender && data.message) {
-        const timeStr = data.time || new Date().toLocaleTimeString([], { 
-            hour: '2-digit', 
-            minute: '2-digit', 
-            hour12: false 
-        });
-        displayMessage(data.sender, data.sender_name, data.message, timeStr);
-    }
+
+    // 글로스 확인용 코드 (소영)
+    console.log("payload=", data);
+
+    // 추가
+    console.log("[RECV] keys=", Object.keys(data));
+    console.log("[RECV] urls_len=", (data.urls ? data.urls.length : 0));
+    console.log("[RECV] has_urls_keys=", Object.prototype.hasOwnProperty.call(data, "urls"));
+    console.log("[RECV] sender=", data.sender, "myId", myId, "isMine=", data.sender === myId);
+
+    if (!data.sender) return;
+
+    const timeStr = data.time || new Date().toLocaleTimeString([], { 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        hour12: false 
+    });
+
+    const senderName = data.sender_name || "";
+    const message = (typeof data.message === "string") ? data.message : "";
+    const urls = Array.isArray(data.urls) ? data.urls : [];
+    const miss = Array.isArray(data.miss) ?  data.miss : [];
+    const gloss = (typeof data.gloss === "string") ? data.gloss : "";
+
+    displayMessage(
+        data.sender,
+        senderName,
+        message,
+        timeStr,
+        urls,
+        miss,
+        gloss
+    );
 });
 
 // ======== API 함수 ========
@@ -186,6 +212,8 @@ async function addFriend(targetId) {
 
 // ======== 채팅 핵심 로직 ========
 async function startChat(friend, clickedElement) {
+    // 잠시 추가
+    console.log("[startChat] called", { friend, clickedElement, BASE_URL});
     /* 채팅방 입장 */
     // UI 활성화
     const allItems = document.querySelectorAll('.friend-item');
@@ -236,8 +264,23 @@ async function startChat(friend, clickedElement) {
                     });
                 }
             } catch(e) {}
+            console.log("history chat payload=", chat);
 
-            displayMessage(chat.sender, chat.sender_name, chat.message, timeStr);
+            console.log("[HISTORY] has_urls=", Array.isArray(chat.urls), "urls_len=", chat.urls?.length, "keys=", Object.keys(chat))
+            // 수어 영상 채팅방에 유지하기 위해 수정 및 추가 (소영)
+            const urls = Array.isArray(chat.urls) ? chat.urls : [];
+            const miss = Array.isArray(chat.miss) ? chat.miss : [];
+            const gloss = (typeof chat.gloss === "string") ? chat.gloss : "";
+
+            displayMessage(
+                chat.sender,
+                chat.sender_name,
+                (typeof chat.message === "string") ? chat.message : "",
+                timeStr,
+                urls,
+                miss,
+                gloss
+            );
         });
 
         // 스크롤 맨 아래로
@@ -272,7 +315,7 @@ function sendMessage() {
     input.focus();
 }
 
-function displayMessage(senderId, senderName, msg, time) {
+function displayMessage(senderId, senderName, msg, time, urls = [], miss = [], gloss = "") {
     /* 말풍선 렌더링 */
     const msgBox = document.getElementById("messages");
     const isMine = (senderId === myId);
@@ -282,25 +325,91 @@ function displayMessage(senderId, senderName, msg, time) {
 
     const nameDiv = document.createElement("div");
     nameDiv.className = "message-name";
-    nameDiv.textContent = senderName;
+    nameDiv.textContent = senderName || "";
 
     const contentDiv = document.createElement("div");
     contentDiv.className = "message-content";
 
+    // 텍스트는 농인/비농인 모두 항상 표시
     const bubbleDiv = document.createElement("div");
     bubbleDiv.className = "message-bubble";
-    bubbleDiv.textContent = msg;
+    bubbleDiv.textContent = (typeof msg === "string") ? msg : "";
+    contentDiv.appendChild(bubbleDiv);
+
+    // role 기반: 농인일 때만 추가 영역(urls/gloss/miss) 표시
+    const shouldShowExtra = isDeaf;
+
+    if (shouldShowExtra) {
+        const extraDiv = document.createElement("div");
+        extraDiv.className = "message-extra";
+        contentDiv.appendChild(extraDiv);
+
+        // gloss 있으면 표시
+        if (typeof gloss === "string" && gloss.trim().length > 0) {
+            const glossDiv = document.createElement("div");
+            glossDiv.className = "message-gloss";
+            glossDiv.textContent = `gloss: ${gloss}`;
+            extraDiv.appendChild(glossDiv);
+        }
+
+        // urls 비디오 표시
+        if (Array.isArray(urls) && urls.length > 0) {
+            const urlWrap = document.createElement("div");
+            urlWrap.className = "message-urls";
+
+            const video = document.createElement("video");
+            video.controls = true;
+            video.width = 200;
+            video.className = "message-video";
+            video.style.marginTop = "6px";
+            video.autoplay = true;
+            video.muted = true;
+            video.playsInline = true;
+
+            let currentIndex = 0;
+            video.src = urls[0];
+
+            const messageIdOrTimeKey = `${senderId}-${time}-${((msg || "") + "").slice(0, 12)}`;
+            console.log("[VIDEO] bind ended for messageId=", messageIdOrTimeKey);
+
+            video.onended = () => {
+                currentIndex += 1;
+
+                if (currentIndex < urls.length) {
+                    video.src = urls[currentIndex];
+                    video.load();
+                    video.play();
+                    return;
+                }
+
+                // 마지막까지 끝났으면 0번으로 복귀
+                currentIndex = 0;
+                video.src = urls[0];
+                video.load();
+            };
+
+            urlWrap.appendChild(video);
+            extraDiv.appendChild(urlWrap);
+        }
+
+        // miss 표시
+        if (Array.isArray(miss) && miss.length > 0) {
+            const missDiv = document.createElement("div");
+            missDiv.className = "message-miss";
+            missDiv.textContent = `미매칭: ${miss.join(", ")}`;
+            extraDiv.appendChild(missDiv);
+        }
+    }
 
     const timeSpan = document.createElement("span");
     timeSpan.className = "message-time";
-    timeSpan.textContent = time;
-
-    contentDiv.appendChild(bubbleDiv);
+    timeSpan.textContent = time || "";
     contentDiv.appendChild(timeSpan);
+
     rowDiv.appendChild(nameDiv);
     rowDiv.appendChild(contentDiv);
     msgBox.appendChild(rowDiv);
-    
+
     msgBox.scrollTop = msgBox.scrollHeight;
 }
 

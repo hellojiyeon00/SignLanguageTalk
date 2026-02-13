@@ -34,6 +34,11 @@ def signup(user_data: UserSignup, db: Session = Depends(get_db)):
 def login(login_data: UserLogin, db: Session = Depends(get_db)):
     """로그인"""
     user = AuthService.authenticate_user(db, login_data)
+    # sender 를 위해 추가 (소영)
+    # user_id
+    user[0]
+    # user_name
+    user[1]
     
     if not user:
         raise HTTPException(
@@ -48,7 +53,9 @@ def login(login_data: UserLogin, db: Session = Depends(get_db)):
         "access_token": access_token,
         "token_type": "bearer",
         "user_id": user[0],
-        "user_name": user[1]
+        "user_name": user[1],
+        # 추가
+        "is_deaf": bool(user[2])
     }
 
 

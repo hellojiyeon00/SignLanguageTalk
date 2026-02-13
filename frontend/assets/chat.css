@@ -300,6 +300,37 @@ body {
     margin-bottom: 2px;
 }
 
+/* url 영상 연결을 위해 잠시 추가 (소영) */
+.message-urls {
+    margin-top: 6px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.message-url {
+    font-size: 12px;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.message-miss {
+    margin-top: 4px;
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+.message-video {
+    border-radius: 8px;
+    max-width: 220px;
+}
+
+.message-extra {
+    display: flex;
+    flex-direction: column;
+    margin-top: 6px;
+}
+
 /* 모달 배경 (어둡게) */
 .modal-overlay {
     position: fixed;
